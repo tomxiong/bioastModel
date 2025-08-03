@@ -140,7 +140,6 @@ cython_debug/
 # Machine Learning & Data Science
 # Datasets
 bioast_dataset/
-dataset/
 data/
 *.csv
 *.json
@@ -208,7 +207,6 @@ Thumbs.db
 *.lnk
 
 # Memory bank (contains sensitive project info)
-memory-bank/
 
 # CloudStudio deployment
 .cloudstudio/
