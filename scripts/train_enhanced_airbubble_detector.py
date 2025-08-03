@@ -529,7 +529,7 @@ class AirBubbleTrainer:
         
         # 生成文本报告
         report_path = os.path.join(self.config.save_dir, f"{self.config.model_name}_report.md")
-        with open(report_path, 'w') as f:
+        with open(report_path, 'w', encoding='utf-8') as f:
             f.write(f"# Enhanced Air Bubble Detector Training Report\n\n")
             f.write(f"**Model**: {self.config.model_name}\n")
             f.write(f"**Training Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")

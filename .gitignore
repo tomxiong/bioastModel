@@ -154,6 +154,7 @@ data/
 *.ckpt
 *.pb
 *.onnx
+/onnx_models/
 *.tflite
 *.h5
 *.hdf5
@@ -178,6 +179,8 @@ mlruns/
 *.bmp
 *.tiff
 *.svg
+analysis/
+reports/
 reports/enhanced_individual_analysis/
 reports/detailed_analysis/
 reports/individual_analysis/
