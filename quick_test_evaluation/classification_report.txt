@@ -1,0 +1,24 @@
+=== 模型评估报告 ===
+
+总体准确率: 0.9726
+AUC: 0.9923
+
+分类报告:
+              precision    recall  f1-score   support
+
+    negative       0.95      1.00      0.97       483
+    positive       1.00      0.95      0.97       576
+
+    accuracy                           0.97      1059
+   macro avg       0.97      0.97      0.97      1059
+weighted avg       0.97      0.97      0.97      1059
+
+混淆矩阵:
+[[481   2]
+ [ 27 549]]
+
+医学诊断指标:
+敏感性 (Sensitivity): 0.9531
+特异性 (Specificity): 0.9959
+阳性预测值 (PPV): 0.9964
+阴性预测值 (NPV): 0.9469

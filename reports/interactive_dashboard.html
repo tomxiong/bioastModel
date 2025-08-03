@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>菌落检测模型 - 交互式对比仪表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .control-item label {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .control-item select,
+        .control-item input {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .control-item select:focus,
+        .control-item input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .model-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .model-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .model-checkbox:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .model-checkbox.selected {
+            border-color: #667eea;
+            background: #e8f0fe;
+        }
+        
+        .model-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .model-info {
+            flex: 1;
+        }
+        
+        .model-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .model-stats {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .comparison-table {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .table tr:hover {
+            background: #e3f2fd;
+        }
+        
+        .best-value {
+            background: #d4edda !important;
+            font-weight: bold;
+            color: #155724;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            opacity: 0.8;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>🔬 菌落检测模型对比仪表板</h1>
+            <p>交互式性能分析与模型选择工具</p>
+        </div>
+
+        <!-- 关键指标概览 -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="totalModels">8</div>
+                <div class="metric-label">训练完成模型</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="bestAccuracy">98.70%</div>
+                <div class="metric-label">最高准确率</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="avgAccuracy">97.96%</div>
+                <div class="metric-label">平均准确率</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="minParams">0.75M</div>
+                <div class="metric-label">最少参数量</div>
+            </div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="controls">
+            <div class="control-group">
+                <div class="control-item">
+                    <label for="sortBy">排序方式:</label>
+                    <select id="sortBy" onchange="updateCharts()">
+                        <option value="accuracy">按准确率</option>
+                        <option value="parameters">按参数量</option>
+                        <option value="efficiency">按效率比</option>
+                        <option value="epochs">按训练轮数</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label for="filterType">架构筛选:</label>
+                    <select id="filterType" onchange="updateCharts()">
+                        <option value="all">全部架构</option>
+                        <option value="cnn">CNN架构</option>
+                        <option value="transformer">Transformer</option>
+                        <option value="hybrid">混合架构</option>
+                        <option value="lightweight">轻量级(<5M)</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label for="minAccuracy">最低准确率:</label>
+                    <input type="range" id="minAccuracy" min="95" max="99" value="95" step="0.1" onchange="updateCharts()">
+                    <span id="minAccuracyValue">95.0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模型选择器 -->
+        <div class="model-selector">
+            <h3>🎯 选择对比模型</h3>
+            <div class="model-grid" id="modelGrid">
+                <!-- 动态生成模型选择框 -->
+            </div>
+        </div>
+
+        <!-- 图表网格 -->
+        <div class="dashboard-grid">
+            <div class="chart-container">
+                <div class="chart-title">📊 准确率 vs 参数量</div>
+                <canvas id="scatterChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">⚡ 效率比对比</div>
+                <canvas id="efficiencyChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">📈 准确率排行</div>
+                <canvas id="accuracyChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">🏋️ 参数量对比</div>
+                <canvas id="parametersChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 详细对比表格 -->
+        <div class="comparison-table full-width">
+            <h3>📋 详细性能对比表</h3>
+            <table class="table" id="comparisonTable">
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>模型名称</th>
+                        <th>验证准确率</th>
+                        <th>参数量</th>
+                        <th>训练轮数</th>
+                        <th>效率比</th>
+                        <th>架构类型</th>
+                        <th>推荐场景</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- 动态生成表格内容 -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>🔬 菌落检测模型交互式仪表板 | 生成时间: 2025-01-03</p>
+            <p>基于8个深度学习模型的完整训练和评估结果</p>
+        </div>
+    </div>
+
+    <script>
+        // 模型数据
+        const modelData = [
+            {
+                name: 'ResNet18-Improved',
+                accuracy: 98.70,
+                parameters: 11.26,
+                epochs: 21,
+                efficiency: 0.088,
+                type: 'cnn',
+                scenario: '高精度要求',
+                color: '#FF6B6B'
+            },
+            {
+                name: 'MIC_MobileNetV3',
+                accuracy: 98.51,
+                parameters: 1.14,
+                epochs: 15,
+                efficiency: 0.864,
+                type: 'cnn',
+                scenario: '移动端部署',
+                color: '#4ECDC4'
+            },
+            {
+                name: 'AirBubble_HybridNet',
+                accuracy: 98.51,
+                parameters: 0.75,
+                epochs: 33,
+                efficiency: 1.313,
+                type: 'hybrid',
+                scenario: '边缘计算',
+                color: '#45B7D1'
+            },
+            {
+                name: 'ConvNext-Tiny',
+                accuracy: 98.33,
+                parameters: 27.86,
+                epochs: 39,
+                efficiency: 0.035,
+                type: 'cnn',
+                scenario: '研究基准',
+                color: '#96CEB4'
+            },
+            {
+                name: 'Micro-ViT',
+                accuracy: 98.33,
+                parameters: 3.27,
+                epochs: 39,
+                efficiency: 0.301,
+                type: 'transformer',
+                scenario: '轻量ViT',
+                color: '#FFEAA7'
+            },
+            {
+                name: 'EfficientNet-B0',
+                accuracy: 98.33,
+                parameters: 1.56,
+                epochs: 16,
+                efficiency: 0.630,
+                type: 'cnn',
+                scenario: '平衡选择',
+                color: '#DDA0DD'
+            },
+            {
+                name: 'ViT-Tiny',
+                accuracy: 96.65,
+                parameters: 2.72,
+                epochs: 19,
+                efficiency: 0.355,
+                type: 'transformer',
+                scenario: '注意力机制',
+                color: '#98D8C8'
+            },
+            {
+                name: 'CoAtNet',
+                accuracy: 96.28,
+                parameters: 26.04,
+                epochs: 27,
+                efficiency: 0.037,
+                type: 'hybrid',
+                scenario: '混合架构',
+                color: '#F7DC6F'
+            }
+        ];
+
+        let selectedModels = [...modelData]; // 默认选择所有模型
+        let charts = {};
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeModelSelector();
+            initializeCharts();
+            updateCharts();
+            updateMinAccuracyDisplay();
+        });
+
+        // 初始化模型选择器
+        function initializeModelSelector() {
+            const modelGrid = document.getElementById('modelGrid');
+            modelData.forEach((model, index) => {
+                const checkbox = document.createElement('div');
+                checkbox.className = 'model-checkbox selected';
+                checkbox.innerHTML = `
+                    <input type="checkbox" id="model_${index}" checked onchange="toggleModel(${index})">
+                    <div class="model-info">
+                        <div class="model-name">${model.name}</div>
+                        <div class="model-stats">${model.accuracy}% | ${model.parameters}M参数</div>
+                    </div>
+                `;
+                modelGrid.appendChild(checkbox);
+            });
+        }
+
+        // 切换模型选择
+        function toggleModel(index) {
+            const checkbox = document.getElementById(`model_${index}`);
+            const modelBox = checkbox.parentElement;
+            
+            if (checkbox.checked) {
+                modelBox.classList.add('selected');
+                if (!selectedModels.find(m => m.name === modelData[index].name)) {
+                    selectedModels.push(modelData[index]);
+                }
+            } else {
+                modelBox.classList.remove('selected');
+                selectedModels = selectedModels.filter(m => m.name !== modelData[index].name);
+            }
+            
+            updateCharts();
+        }
+
+        // 更新最低准确率显示
+        function updateMinAccuracyDisplay() {
+            const slider = document.getElementById('minAccuracy');
+            const display = document.getElementById('minAccuracyValue');
+            
+            slider.addEventListener('input', function() {
+                display.textContent = this.value + '%';
+            });
+        }
+
+        // 初始化图表
+        function initializeCharts() {
+            // 散点图
+            const scatterCtx = document.getElementById('scatterChart').getContext('2d');
+            charts.scatter = new Chart(scatterCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const model = context.raw.model;
+                                    return `${model.name}: ${model.accuracy}%, ${model.parameters}M参数`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '参数量 (百万)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '准确率 (%)'
+                            },
+                            min: 95,
+                            max: 99
+                        }
+                    }
+                }
+            });
+
+            // 效率比图表
+            const efficiencyCtx = document.getElementById('efficiencyChart').getContext('2d');
+            charts.efficiency = new Chart(efficiencyCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '效率比',
+                        data: [],
+                        backgroundColor: []
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: '效率比 (准确率/参数量)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 准确率图表
+            const accuracyCtx = document.getElementById('accuracyChart').getContext('2d');
+            charts.accuracy = new Chart(accuracyCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '准确率 (%)',
+                        data: [],
+                        backgroundColor: []
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: '准确率 (%)'
+                            },
+                            min: 95,
+                            max: 99
+                        }
+                    }
+                }
+            });
+
+            // 参数量图表
+            const parametersCtx = document.getElementById('parametersChart').getContext('2d');
+            charts.parameters = new Chart(parametersCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '参数量 (百万)',
+                        data: [],
+                        backgroundColor: []
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: '参数量 (百万)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 更新图表
+        function updateCharts() {
+            const filteredData = getFilteredData();
+            const sortedData = getSortedData(filteredData);
+
+            updateScatterChart(filteredData);
+            updateBarCharts(sortedData);
+            updateTable(sortedData);
+        }
+
+        // 获取过滤后的数据
+        function getFilteredData() {
+            const filterType = document.getElementById('filterType').value;
+            const minAccuracy = parseFloat(document.getElementById('minAccuracy').value);
+
+            let filtered = selectedModels.filter(model => model.accuracy >= minAccuracy);
+
+            if (filterType !== 'all') {
+                if (filterType === 'lightweight') {
+                    filtered = filtered.filter(model => model.parameters < 5);
+                } else {
+                    filtered = filtered.filter(model => model.type === filterType);
+                }
+            }
+
+            return filtered;
+        }
+
+        // 获取排序后的数据
+        function getSortedData(data) {
+            const sortBy = document.getElementById('sortBy').value;
+            
+            return [...data].sort((a, b) => {
+                switch (sortBy) {
+                    case 'accuracy':
+                        return b.accuracy - a.accuracy;
+                    case 'parameters':
+                        return a.parameters - b.parameters;
+                    case 'efficiency':
+                        return b.efficiency - a.efficiency;
+                    case 'epochs':
+                        return a.epochs - b.epochs;
+                    default:
+                        return 0;
+                }
+            });
+        }
+
+        // 更新散点图
+        function updateScatterChart(data) {
+            const scatterData = data.map(model => ({
+                x: model.parameters,
+                y: model.accuracy,
+                model: model
+            }));
+
+            charts.scatter.data.datasets = [{
+                label: '模型性能',
+                data: scatterData,
+                backgroundColor: data.map(model => model.color),
+                borderColor: data.map(model => model.color),
+                pointRadius: 8,
+                pointHoverRadius: 10
+            }];
+
+            charts.scatter.update();
+        }
+
+        // 更新柱状图
+        function updateBarCharts(data) {
+            const labels = data.map(model => model.name);
+            const colors = data.map(model => model.color);
+
+            // 效率比图表
+            charts.efficiency.data.labels = labels;
+            charts.efficiency.data.datasets[0].data = data.map(model => model.efficiency);
+            charts.efficiency.data.datasets[0].backgroundColor = colors;
+            charts.efficiency.update();
+
+            // 准确率图表
+            charts.accuracy.data.labels = labels;
+            charts.accuracy.data.datasets[0].data = data.map(model => model.accuracy);
+            charts.accuracy.data.datasets[0].backgroundColor = colors;
+            charts.accuracy.update();
+
+            // 参数量图表
+            charts.parameters.data.labels = labels;
+            charts.parameters.data.datasets[0].data = data.map(model => model.parameters);
+            charts.parameters.data.datasets[0].backgroundColor = colors;
+            charts.parameters.update();
+        }
+
+        // 更新表格
+        function updateTable(data) {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            data.forEach((model, index) => {
+                const row = document.createElement('tr');
+                const isFirst = index === 0;
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><strong>${model.name}</strong></td>
+                    <td class="${isFirst ? 'best-value' : ''}">${model.accuracy}%</td>
+                    <td>${model.parameters}M</td>
+                    <td>${model.epochs}</td>
+                    <td>${model.efficiency.toFixed(3)}</td>
+                    <td>${getTypeLabel(model.type)}</td>
+                    <td>${model.scenario}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // 获取架构类型标签
+        function getTypeLabel(type) {
+            const labels = {
+                'cnn': 'CNN',
+                'transformer': 'Transformer',
+                'hybrid': '混合架构'
+            };
+            return labels[type] || type;
+        }
+    </script>
+</body>
+</html>

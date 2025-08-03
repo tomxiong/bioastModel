@@ -1,0 +1,50 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>VIT_TINY Evaluation Report</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .header { background-color: #f0f0f0; padding: 20px; border-radius: 5px; }
+            .metric { margin: 10px 0; }
+            .metric-value { font-weight: bold; color: #2196F3; }
+            table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>VIT_TINY Model Evaluation Report</h1>
+            <p>Generated on: 2025-08-03 03:20:39</p>
+        </div>
+        
+        <h2>Performance Metrics</h2>
+        <div class="metric">Accuracy: <span class="metric-value">0.9660</span></div>
+        <div class="metric">Precision: <span class="metric-value">0.9675</span></div>
+        <div class="metric">Recall: <span class="metric-value">0.9660</span></div>
+        <div class="metric">F1-Score: <span class="metric-value">0.9661</span></div>
+        <div class="metric">AUC: <span class="metric-value">0.9904</span></div>
+        <div class="metric">Sensitivity: <span class="metric-value">0.9444</span></div>
+        <div class="metric">Specificity: <span class="metric-value">0.9917</span></div>
+        
+        <h2>Confusion Matrix</h2>
+        <table>
+            <tr><th></th><th>Predicted Negative</th><th>Predicted Positive</th></tr>
+            <tr><th>Actual Negative</th><td>479</td><td>4</td></tr>
+            <tr><th>Actual Positive</th><td>32</td><td>544</td></tr>
+        </table>
+        
+        <h2>Classification Report</h2>
+        <pre>              precision    recall  f1-score   support
+
+    negative       0.94      0.99      0.96       483
+    positive       0.99      0.94      0.97       576
+
+    accuracy                           0.97      1059
+   macro avg       0.97      0.97      0.97      1059
+weighted avg       0.97      0.97      0.97      1059
+</pre>
+    </body>
+    </html>
+    
