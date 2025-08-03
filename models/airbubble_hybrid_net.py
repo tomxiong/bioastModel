@@ -295,7 +295,7 @@ class OpticalDistortionCorrector(nn.Module):
             [[-1, -1, -1],
              [-1,  8, -1],
              [-1, -1, -1]]
-        ], dtype=torch.float32) / 8.0
+        ], dtype=torch.float32, device=next(self.parameters()).device) / 8.0
         
         # Expand for all channels - kernel is already (1, 1, 3, 3)
         kernel = kernel.repeat(num_channels, 1, 1, 1)

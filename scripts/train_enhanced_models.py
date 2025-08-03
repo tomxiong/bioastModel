@@ -145,12 +145,10 @@ from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from core.data.dataset import BioDataset
-from core.training.trainer import ModelTrainer
-from core.evaluation.evaluator import ModelEvaluator
-from core.utils.metrics import MetricsCalculator
-from core.utils.visualization import TrainingVisualizer
-from core.config.training_configs import get_training_config
+from training.dataset import BioastDataset
+from training.trainer import ModelTrainer
+from training.evaluator import ModelEvaluator
+from training.visualizer import TrainingVisualizer
 
 # Import enhanced models
 from models.mic_mobilenetv3 import create_mic_mobilenetv3, MODEL_CONFIG as MIC_MOBILENET_CONFIG
@@ -292,7 +290,7 @@ class EnhancedModelTrainer:
             self.optimizer.zero_grad()
             
             # Forward pass
-            if self.model_name in ['micro_vit', 'airbubble_hybrid_net']:
+            if self.model_name in ['micro_vit', 'airbubble_hybrid_net', 'mic_mobilenetv3']:
                 # Multi-task models
                 outputs = self.model(data)
                 if isinstance(outputs, dict):
@@ -340,7 +338,7 @@ class EnhancedModelTrainer:
                 data, target = data.to(self.device), target.to(self.device)
                 
                 # Forward pass
-                if self.model_name in ['micro_vit', 'airbubble_hybrid_net']:
+                if self.model_name in ['micro_vit', 'airbubble_hybrid_net', 'mic_mobilenetv3']:
                     # Multi-task models
                     outputs = self.model(data)
                     if isinstance(outputs, dict):
