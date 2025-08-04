@@ -1,5 +1,5 @@
 """
-AirBubbleHybridNet模型转换器
+Air Bubble Hybrid Network模型转换器
 """
 
 import os
@@ -12,10 +12,10 @@ from pathlib import Path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.onnx_converter_base import ONNXConverterBase
-from models.airbubble_hybrid_net import AirBubbleHybridNet, create_airbubble_hybrid_net
+from models.airbubble_hybrid_net import create_airbubble_hybrid_net
 
 class AirBubbleHybridNetConverter(ONNXConverterBase):
-    """AirBubbleHybridNet模型转换器"""
+    """Air Bubble Hybrid Network模型转换器"""
     
     def __init__(self):
         """初始化转换器"""
@@ -40,7 +40,11 @@ class AirBubbleHybridNetConverter(ONNXConverterBase):
         
         # 创建模型实例
         try:
-            model = create_airbubble_hybrid_net(num_classes=2, model_size='base')
+            model = create_airbubble_hybrid_net(
+                num_classes=4,  # 包括气泡干扰类
+                model_size='base',
+                enable_distortion_correction=True
+            )
             model.eval()
             
             # 加载模型权重
@@ -54,30 +58,35 @@ class AirBubbleHybridNetConverter(ONNXConverterBase):
             else:
                 # 尝试直接加载
                 state_dict = checkpoint
-                
-            # 处理base_model前缀问题
-            new_state_dict = {}
-            for key, value in state_dict.items():
-                if key.startswith('base_model.'):
-                    new_key = key[len('base_model.'):]
-                    new_state_dict[new_key] = value
-                else:
-                    new_state_dict[key] = value
-                    
-            # 尝试加载处理后的权重
-            model.load_state_dict(new_state_dict)
+            
+            # 加载权重
+            model.load_state_dict(state_dict)
             
             logging.info("模型权重加载成功")
         except Exception as e:
             logging.error(f"加载模型失败: {e}")
             return False
         
+        # 创建包装器模型，只输出主分类结果
+        class AirBubbleHybridNetWrapper(torch.nn.Module):
+            def __init__(self, model):
+                super().__init__()
+                self.model = model
+            
+            def forward(self, x):
+                outputs = self.model(x)
+                # 只返回分类结果，简化ONNX模型
+                return outputs['classification']
+        
+        wrapped_model = AirBubbleHybridNetWrapper(model)
+        wrapped_model.eval()
+        
         # 转换为ONNX格式
-        # 混合网络可能包含多种架构的组合，需要特殊处理
+        # 混合模型包含Transformer，需要较高的opset版本
         success = self.convert_to_onnx(
-            model, 
+            wrapped_model, 
             self.input_shape, 
-            opset_version=13,  # 尝试使用较高的opset版本
+            opset_version=13,
             dynamic_axes=True
         )
         
@@ -85,7 +94,7 @@ class AirBubbleHybridNetConverter(ONNXConverterBase):
             # 尝试使用更低的opset版本
             logging.info("尝试使用opset版本12进行转换...")
             success = self.convert_to_onnx(
-                model, 
+                wrapped_model, 
                 self.input_shape, 
                 opset_version=12,
                 dynamic_axes=True
@@ -95,24 +104,14 @@ class AirBubbleHybridNetConverter(ONNXConverterBase):
                 # 再次尝试更低的opset版本
                 logging.info("尝试使用opset版本11进行转换...")
                 success = self.convert_to_onnx(
-                    model, 
+                    wrapped_model, 
                     self.input_shape, 
                     opset_version=11,
                     dynamic_axes=False  # 禁用动态轴
                 )
                 
                 if not success:
-                    # 最后尝试，使用最低的opset版本和静态输入
-                    logging.info("尝试使用opset版本9进行转换...")
-                    success = self.convert_to_onnx(
-                        model, 
-                        self.input_shape, 
-                        opset_version=9,
-                        dynamic_axes=False
-                    )
-                    
-                    if not success:
-                        return False
+                    return False
         
         # 验证ONNX模型
         success = self.validate_onnx_model(self.input_shape)
@@ -129,9 +128,9 @@ def main():
     success = converter.convert()
     
     if success:
-        logging.info(f"AirBubbleHybridNet模型已成功转换为ONNX格式")
+        logging.info(f"Air Bubble Hybrid Network模型已成功转换为ONNX格式")
     else:
-        logging.error(f"AirBubbleHybridNet模型转换失败")
+        logging.error(f"Air Bubble Hybrid Network模型转换失败")
 
 if __name__ == "__main__":
     main()

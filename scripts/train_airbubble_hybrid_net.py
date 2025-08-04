@@ -1,5 +1,5 @@
 """
-Micro ViT 模型训练脚本
+Air Bubble Hybrid Network 模型训练脚本
 """
 
 import os
@@ -18,7 +18,7 @@ from tqdm import tqdm
 # 添加项目根目录到系统路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from models.micro_vit import create_micro_vit
+from models.airbubble_hybrid_net import create_airbubble_hybrid_net
 from core.config.model_configs import get_model_config
 from core.data_loader import create_data_loaders
 from core.training_utils import EarlyStopping, ModelCheckpoint, calculate_metrics
@@ -30,15 +30,15 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
-class MicroViTTrainer:
-    """Micro ViT 训练器"""
+class AirBubbleHybridNetTrainer:
+    """Air Bubble Hybrid Network 训练器"""
     
     def __init__(self, config):
         self.config = config
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
         # 创建实验目录
-        self.experiment_dir = Path(f"experiments/experiment_{datetime.now().strftime('%Y%m%d_%H%M%S')}/micro_vit")
+        self.experiment_dir = Path(f"experiments/experiment_{datetime.now().strftime('%Y%m%d_%H%M%S')}/airbubble_hybrid_net")
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
         
         # 保存配置
@@ -50,11 +50,11 @@ class MicroViTTrainer:
     
     def create_model(self):
         """创建模型"""
-        model = create_micro_vit(
+        model = create_airbubble_hybrid_net(
             num_classes=self.config['num_classes'],
-            model_size='tiny',
-            drop_rate=self.config['dropout_rate'],
-            enable_bubble_detection=True
+            model_size='base',
+            dropout_rate=self.config['dropout_rate'],
+            enable_distortion_correction=True
         )
         
         model = model.to(self.device)
@@ -62,8 +62,7 @@ class MicroViTTrainer:
         # 打印模型信息
         model_info = model.get_model_info()
         logging.info(f"模型参数数量: {model_info['total_parameters']:,}")
-        logging.info(f"Patch数量: {model_info['num_patches']}")
-        logging.info(f"嵌入维度: {model_info['embed_dim']}")
+        logging.info(f"特性: {model_info['features']}")
         
         return model
     
@@ -84,15 +83,25 @@ class MicroViTTrainer:
     
     def create_optimizer_and_scheduler(self, model):
         """创建优化器和学习率调度器"""
-        # ViT通常使用较小的学习率
-        optimizer = optim.AdamW(
-            model.parameters(),
-            lr=self.config['learning_rate'],
-            weight_decay=self.config['weight_decay'],
-            betas=(0.9, 0.999)
-        )
+        # 为不同部分使用不同的学习率
+        cnn_params = []
+        transformer_params = []
+        head_params = []
         
-        # 使用余弦退火调度器
+        for name, param in model.named_parameters():
+            if 'transformer' in name:
+                transformer_params.append(param)
+            elif any(head in name for head in ['classification_head', 'turbidity_head', 'bubble_param_head', 'quality_head']):
+                head_params.append(param)
+            else:
+                cnn_params.append(param)
+        
+        optimizer = optim.AdamW([
+            {'params': cnn_params, 'lr': self.config['learning_rate']},
+            {'params': transformer_params, 'lr': self.config['learning_rate'] * 0.5},  # Transformer用较小学习率
+            {'params': head_params, 'lr': self.config['learning_rate'] * 2.0}  # Head用较大学习率
+        ], weight_decay=self.config['weight_decay'])
+        
         scheduler = optim.lr_scheduler.CosineAnnealingLR(
             optimizer,
             T_max=self.config['epochs'],
@@ -103,23 +112,27 @@ class MicroViTTrainer:
     
     def create_loss_functions(self):
         """创建损失函数"""
-        # 主分类损失
+        # 主分类损失（4类：正常、异常、气泡干扰、其他）
         classification_loss = nn.CrossEntropyLoss()
         
         # 浊度回归损失
         turbidity_loss = nn.MSELoss()
         
+        # 气泡参数回归损失
+        bubble_param_loss = nn.MSELoss()
+        
         # 质量评估损失
         quality_loss = nn.CrossEntropyLoss()
         
-        # 气泡检测损失（二元交叉熵）
-        bubble_loss = nn.BCELoss()
+        # 气泡检测损失
+        bubble_detection_loss = nn.BCELoss()
         
         return {
             'classification': classification_loss,
             'turbidity': turbidity_loss,
+            'bubble_param': bubble_param_loss,
             'quality': quality_loss,
-            'bubble': bubble_loss
+            'bubble_detection': bubble_detection_loss
         }
     
     def compute_multi_task_loss(self, outputs, targets, loss_functions):
@@ -138,6 +151,12 @@ class MicroViTTrainer:
                 outputs['turbidity'].squeeze(), targets['turbidity']
             )
         
+        # 气泡参数损失
+        if 'bubble_params' in outputs and 'bubble_params' in targets:
+            losses['bubble_param'] = loss_functions['bubble_param'](
+                outputs['bubble_params'], targets['bubble_params']
+            )
+        
         # 质量评估损失
         if 'quality' in outputs and 'quality' in targets:
             losses['quality'] = loss_functions['quality'](
@@ -145,21 +164,24 @@ class MicroViTTrainer:
             )
         
         # 气泡检测损失
-        if 'bubble_detection' in outputs and 'bubble_mask' in targets:
-            # 气泡检测是per-patch的，需要适当处理
-            bubble_pred = outputs['bubble_detection'].mean(dim=1)  # 平均池化到图像级别
-            losses['bubble'] = loss_functions['bubble'](
-                bubble_pred.squeeze(), targets['bubble_mask']
+        if 'bubble_analysis' in outputs and 'bubble_mask' in targets:
+            bubble_mask = outputs['bubble_analysis']['bubble_mask']
+            # 全局平均池化到图像级别
+            bubble_pred = torch.mean(bubble_mask.view(bubble_mask.size(0), -1), dim=1)
+            losses['bubble_detection'] = loss_functions['bubble_detection'](
+                bubble_pred, targets['bubble_mask']
             )
         
         # 总损失（加权组合）
         total_loss = losses['classification']
         if 'turbidity' in losses:
-            total_loss += 0.2 * losses['turbidity']
+            total_loss += 0.3 * losses['turbidity']
+        if 'bubble_param' in losses:
+            total_loss += 0.2 * losses['bubble_param']
         if 'quality' in losses:
             total_loss += 0.15 * losses['quality']
-        if 'bubble' in losses:
-            total_loss += 0.1 * losses['bubble']
+        if 'bubble_detection' in losses:
+            total_loss += 0.25 * losses['bubble_detection']
         
         losses['total'] = total_loss
         return losses
@@ -167,7 +189,10 @@ class MicroViTTrainer:
     def train_epoch(self, model, train_loader, optimizer, loss_functions, epoch):
         """训练一个epoch"""
         model.train()
-        total_losses = {'total': 0, 'classification': 0, 'turbidity': 0, 'quality': 0, 'bubble': 0}
+        total_losses = {
+            'total': 0, 'classification': 0, 'turbidity': 0, 
+            'bubble_param': 0, 'quality': 0, 'bubble_detection': 0
+        }
         correct = 0
         total = 0
         
@@ -193,7 +218,7 @@ class MicroViTTrainer:
             # 反向传播
             losses['total'].backward()
             
-            # 梯度裁剪（对ViT很重要）
+            # 梯度裁剪
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             
             optimizer.step()
@@ -224,7 +249,10 @@ class MicroViTTrainer:
     def validate(self, model, val_loader, loss_functions):
         """验证模型"""
         model.eval()
-        total_losses = {'total': 0, 'classification': 0, 'turbidity': 0, 'quality': 0, 'bubble': 0}
+        total_losses = {
+            'total': 0, 'classification': 0, 'turbidity': 0, 
+            'bubble_param': 0, 'quality': 0, 'bubble_detection': 0
+        }
         correct = 0
         total = 0
         
@@ -263,7 +291,7 @@ class MicroViTTrainer:
     
     def train(self):
         """主训练循环"""
-        logging.info("开始训练 Micro ViT...")
+        logging.info("开始训练 Air Bubble Hybrid Network...")
         
         # 创建模型
         model = self.create_model()
@@ -278,7 +306,7 @@ class MicroViTTrainer:
         loss_functions = self.create_loss_functions()
         
         # 创建早停和检查点保存器
-        early_stopping = EarlyStopping(patience=15, min_delta=0.001)  # ViT需要更多耐心
+        early_stopping = EarlyStopping(patience=12, min_delta=0.001)
         checkpoint = ModelCheckpoint(
             self.experiment_dir,
             monitor='val_accuracy',
@@ -317,6 +345,12 @@ class MicroViTTrainer:
                 f"Val Loss: {val_losses['total']:.4f}, Val Acc: {val_acc:.2f}%"
             )
             
+            # 详细损失信息
+            if epoch % 5 == 0:
+                logging.info(f"  详细损失 - 分类: {train_losses['classification']:.4f}, "
+                           f"浊度: {train_losses.get('turbidity', 0):.4f}, "
+                           f"气泡: {train_losses.get('bubble_detection', 0):.4f}")
+            
             # 保存检查点
             checkpoint.save(model, optimizer, epoch, val_acc, val_losses['total'])
             
@@ -342,20 +376,20 @@ def main():
     """主函数"""
     # 训练配置
     config = {
-        'model_name': 'micro_vit',
-        'num_classes': 2,
+        'model_name': 'airbubble_hybrid_net',
+        'num_classes': 4,  # 包括气泡干扰类
         'input_size': 70,
-        'batch_size': 32,
-        'epochs': 60,  # ViT通常需要更多epochs
-        'learning_rate': 0.0005,  # ViT使用较小的学习率
-        'weight_decay': 0.05,  # ViT使用较大的权重衰减
-        'dropout_rate': 0.1,
+        'batch_size': 24,  # 混合模型较大，使用较小batch size
+        'epochs': 50,
+        'learning_rate': 0.001,
+        'weight_decay': 1e-4,
+        'dropout_rate': 0.2,
         'data_dir': 'data',
         'num_workers': 4
     }
     
     # 创建训练器
-    trainer = MicroViTTrainer(config)
+    trainer = AirBubbleHybridNetTrainer(config)
     
     # 开始训练
     model, history = trainer.train()
