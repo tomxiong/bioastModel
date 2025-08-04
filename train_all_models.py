@@ -38,6 +38,15 @@ from models.resnet_improved import create_resnet18_improved, create_resnet34_imp
 from models.vit_tiny import create_vit_tiny
 from models.enhanced_airbubble_detector import create_enhanced_airbubble_detector
 
+# 新增模型导入
+from models.efficientnet_v2 import create_efficientnetv2_s, create_efficientnetv2_m
+from models.mobilenet_v3 import create_mobilenetv3_large, create_mobilenetv3_small
+from models.regnet import create_regnet_x_400mf, create_regnet_y_400mf
+from models.densenet import create_densenet121, create_densenet169
+from models.shufflenet_v2 import create_shufflenetv2_x0_5, create_shufflenetv2_x1_0
+from models.ghostnet import create_ghostnet
+from models.mnasnet import create_mnasnet_1_0
+
 class UniversalModelTrainer:
     """通用模型训练器，支持所有9种模型"""
     
@@ -104,6 +113,35 @@ class UniversalModelTrainer:
             model = create_resnet50_improved(num_classes=2)
         elif self.model_name == 'vit_tiny':
             model = create_vit_tiny(num_classes=2, dropout_rate=0.1)
+        # 新增模型 - EfficientNet V2系列
+        elif self.model_name == 'efficientnetv2_s':
+            model = create_efficientnetv2_s(num_classes=2)
+        elif self.model_name == 'efficientnetv2_m':
+            model = create_efficientnetv2_m(num_classes=2)
+        # 新增模型 - MobileNet V3系列
+        elif self.model_name == 'mobilenetv3_large':
+            model = create_mobilenetv3_large(num_classes=2)
+        elif self.model_name == 'mobilenetv3_small':
+            model = create_mobilenetv3_small(num_classes=2)
+        # 新增模型 - RegNet系列
+        elif self.model_name == 'regnet_x_400mf':
+            model = create_regnet_x_400mf(num_classes=2)
+        elif self.model_name == 'regnet_y_400mf':
+            model = create_regnet_y_400mf(num_classes=2)
+        # 新增模型 - DenseNet系列
+        elif self.model_name == 'densenet121':
+            model = create_densenet121(num_classes=2)
+        elif self.model_name == 'densenet169':
+            model = create_densenet169(num_classes=2)
+        # 新增模型 - 轻量级模型
+        elif self.model_name == 'shufflenetv2_x0_5':
+            model = create_shufflenetv2_x0_5(num_classes=2)
+        elif self.model_name == 'shufflenetv2_x1_0':
+            model = create_shufflenetv2_x1_0(num_classes=2)
+        elif self.model_name == 'ghostnet':
+            model = create_ghostnet(num_classes=2)
+        elif self.model_name == 'mnasnet_1_0':
+            model = create_mnasnet_1_0(num_classes=2)
         else:
             raise ValueError(f"Unknown model: {self.model_name}")
         
@@ -388,6 +426,28 @@ def get_model_configs() -> List[Tuple[str, Dict[str, Any]]]:
         ('resnet50_improved', {'estimated_params': 23.5, 'batch_size': 16, 'epochs': 2}),
         ('coatnet', {'estimated_params': 25.0, 'batch_size': 16, 'epochs': 2}),
         ('convnext_tiny', {'estimated_params': 28.6, 'batch_size': 16, 'epochs': 2}),
+        
+        # 新增模型 - EfficientNet V2系列
+        ('efficientnetv2_s', {'estimated_params': 21.5, 'batch_size': 16, 'epochs': 2}),
+        ('efficientnetv2_m', {'estimated_params': 54.1, 'batch_size': 16, 'epochs': 2}),
+        
+        # 新增模型 - MobileNet V3系列
+        ('mobilenetv3_large', {'estimated_params': 5.4, 'batch_size': 16, 'epochs': 2}),
+        ('mobilenetv3_small', {'estimated_params': 2.9, 'batch_size': 16, 'epochs': 2}),
+        
+        # 新增模型 - RegNet系列
+        ('regnet_x_400mf', {'estimated_params': 5.2, 'batch_size': 16, 'epochs': 2}),
+        ('regnet_y_400mf', {'estimated_params': 4.3, 'batch_size': 16, 'epochs': 2}),
+        
+        # 新增模型 - DenseNet系列
+        ('densenet121', {'estimated_params': 8.0, 'batch_size': 16, 'epochs': 2}),
+        ('densenet169', {'estimated_params': 14.1, 'batch_size': 16, 'epochs': 2}),
+        
+        # 新增模型 - 轻量级模型
+        ('shufflenetv2_x0_5', {'estimated_params': 1.4, 'batch_size': 16, 'epochs': 2}),
+        ('shufflenetv2_x1_0', {'estimated_params': 2.3, 'batch_size': 16, 'epochs': 2}),
+        ('ghostnet', {'estimated_params': 5.2, 'batch_size': 16, 'epochs': 2}),
+        ('mnasnet_1_0', {'estimated_params': 4.4, 'batch_size': 16, 'epochs': 2}),
     ]
     
     # 按参数量排序
