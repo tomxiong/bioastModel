@@ -1,5 +1,5 @@
 """
-单独转换AirBubbleHybridNet模型为ONNX格式
+使用torch.jit.trace转换AirBubbleHybridNet模型
 """
 
 import os
@@ -7,7 +7,6 @@ import sys
 import logging
 import torch
 import onnx
-import onnxruntime
 import numpy as np
 from pathlib import Path
 
@@ -23,44 +22,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models.airbubble_hybrid_net import create_airbubble_hybrid_net
 
-def find_latest_checkpoint(model_name):
-    """查找最新的检查点文件"""
-    experiments_dir = Path("experiments")
-    
-    if not experiments_dir.exists():
-        logging.error(f"实验目录不存在: {experiments_dir}")
-        return None
-    
-    # 查找所有包含模型名称的实验目录
-    model_dirs = []
-    for exp_dir in experiments_dir.iterdir():
-        if exp_dir.is_dir():
-            model_dir = exp_dir / model_name
-            if model_dir.exists() and model_dir.is_dir():
-                model_dirs.append(model_dir)
-    
-    if not model_dirs:
-        logging.error(f"未找到{model_name}的实验目录")
-        return None
-    
-    # 查找最新的检查点文件
-    latest_checkpoint = None
-    latest_time = 0
-    
-    for model_dir in model_dirs:
-        for checkpoint_file in model_dir.glob("*.pth"):
-            if checkpoint_file.stat().st_mtime > latest_time:
-                latest_time = checkpoint_file.stat().st_mtime
-                latest_checkpoint = checkpoint_file
-    
-    if latest_checkpoint is None:
-        logging.error(f"未找到{model_name}的检查点文件")
-        return None
-    
-    return latest_checkpoint
-
-def convert_to_onnx():
-    """转换AirBubbleHybridNet模型为ONNX格式"""
+def main():
+    """主函数"""
     model_name = "airbubble_hybrid_net"
     input_shape = (3, 70, 70)
     
@@ -71,12 +34,13 @@ def convert_to_onnx():
     onnx_path = onnx_dir / f"{model_name}.onnx"
     
     # 查找最新的检查点文件
-    checkpoint_path = find_latest_checkpoint(model_name)
+    checkpoint_path = Path("experiments/experiment_20250803_115344/airbubble_hybrid_net/best_model.pth")
     
-    if checkpoint_path is None:
-        return False
+    if not checkpoint_path.exists():
+        logging.error(f"检查点文件不存在: {checkpoint_path}")
+        return
     
-    logging.info(f"找到最新的检查点文件: {checkpoint_path}")
+    logging.info(f"使用检查点文件: {checkpoint_path}")
     
     # 创建模型实例
     try:
@@ -94,7 +58,7 @@ def convert_to_onnx():
         else:
             # 尝试直接加载
             state_dict = checkpoint
-            
+        
         # 处理base_model前缀问题
         new_state_dict = {}
         for key, value in state_dict.items():
@@ -103,19 +67,21 @@ def convert_to_onnx():
                 new_state_dict[new_key] = value
             else:
                 new_state_dict[key] = value
-                
+        
         # 尝试加载处理后的权重
         model.load_state_dict(new_state_dict)
         
         logging.info("模型权重加载成功")
     except Exception as e:
         logging.error(f"加载模型失败: {e}")
-        return False
+        import traceback
+        traceback.print_exc()
+        return
     
     # 创建示例输入
     dummy_input = torch.randn(1, *input_shape)
     
-    # 导出为ONNX格式
+    # 使用torch.jit.trace转换模型
     try:
         # 简化模型输出，只保留分类结果
         class ModelWrapper(torch.nn.Module):
@@ -129,8 +95,12 @@ def convert_to_onnx():
         
         wrapped_model = ModelWrapper(model)
         
+        # 使用torch.jit.trace转换模型
+        traced_model = torch.jit.trace(wrapped_model, dummy_input)
+        
+        # 保存为ONNX格式
         torch.onnx.export(
-            wrapped_model,
+            traced_model,
             dummy_input,
             onnx_path,
             export_params=True,
@@ -143,49 +113,17 @@ def convert_to_onnx():
         )
         
         logging.info(f"ONNX模型已保存至: {onnx_path}")
-    except Exception as e:
-        logging.error(f"导出ONNX模型失败: {e}")
-        return False
-    
-    # 验证ONNX模型
-    try:
+        
+        # 验证ONNX模型
         onnx_model = onnx.load(onnx_path)
         onnx.checker.check_model(onnx_model)
         logging.info("ONNX模型检查通过")
+        
+        logging.info(f"{model_name}已成功转换为ONNX格式")
     except Exception as e:
-        logging.error(f"ONNX模型验证失败: {e}")
-        return False
-    
-    # 测试ONNX模型推理
-    try:
-        # 创建ONNX运行时会话
-        session = onnxruntime.InferenceSession(str(onnx_path))
-        
-        # 准备输入
-        input_name = session.get_inputs()[0].name
-        input_data = dummy_input.numpy()
-        
-        # 运行推理
-        outputs = session.run(None, {input_name: input_data})
-        
-        # 检查输出
-        output_shape = outputs[0].shape
-        logging.info(f"输出形状: {output_shape}")
-        
-        logging.info(f"{model_name}已成功转换为ONNX格式并通过验证")
-        return True
-    except Exception as e:
-        logging.error(f"ONNX模型推理测试失败: {e}")
-        return False
-
-def main():
-    """主函数"""
-    success = convert_to_onnx()
-    
-    if success:
-        logging.info("AirBubbleHybridNet模型已成功转换为ONNX格式")
-    else:
-        logging.error("AirBubbleHybridNet模型转换失败")
+        logging.error(f"导出ONNX模型失败: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()

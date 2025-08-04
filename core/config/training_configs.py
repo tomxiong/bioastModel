@@ -15,6 +15,19 @@ TRAINING_CONFIGS = {
         'description': 'Default training configuration'
     },
     
+    'simplified_airbubble_optimized': {
+        'batch_size': 32,
+        'learning_rate': 0.0005,
+        'weight_decay': 1e-3,
+        'num_epochs': 30,
+        'optimizer': 'adamw',
+        'scheduler': 'cosine',
+        'warmup_epochs': 3,
+        'label_smoothing': 0.1,
+        'dropout_rate': 0.5,
+        'description': 'Optimized configuration for Simplified Air Bubble Detector training'
+    },
+    
     'efficientnet_optimized': {
         'batch_size': 32,
         'learning_rate': 0.001,
@@ -99,6 +112,7 @@ TRAINING_CONFIGS = {
 
 # Model-specific configuration mapping
 MODEL_CONFIG_MAPPING = {
+    'simplified_airbubble_detector': 'simplified_airbubble_optimized',
     'efficientnet_b0': 'efficientnet_optimized',
     'resnet18_improved': 'resnet_optimized',
     'convnext_tiny': 'convnext_optimized',

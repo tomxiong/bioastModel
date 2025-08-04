@@ -3,6 +3,18 @@ Model configuration definitions for all supported models.
 """
 
 MODEL_CONFIGS = {
+    'simplified_airbubble_detector': {
+        'name': 'simplified_airbubble_detector',
+        'class_name': 'SimplifiedAirBubbleDetector',
+        'module_path': 'models.simplified_airbubble_detector',
+        'params_millions': 0.14,
+        'parameters': 139266,  # Actual parameter count
+        'input_size': 70,
+        'num_classes': 2,
+        'description': 'Lightweight CNN model designed for efficient air bubble detection with minimal parameters to prevent overfitting',
+        'color': 'cyan',  # For visualization
+        'experiment_pattern': 'experiment_20250803_180308'  # Current experiment pattern
+    },
     'efficientnet_b0': {
         'name': 'efficientnet_b0',
         'class_name': 'EfficientNetB0',
