@@ -228,6 +228,9 @@ class SingleModelTrainer:
             
             optimizer.zero_grad()
             output = model(data)
+            # Handle models that return dict (like mic_mobilenetv3)
+            if isinstance(output, dict):
+                output = output['classification']
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
@@ -257,6 +260,9 @@ class SingleModelTrainer:
             for data, target in val_loader:
                 data, target = data.to(self.device), target.to(self.device)
                 output = model(data)
+                # Handle models that return dict (like mic_mobilenetv3)
+                if isinstance(output, dict):
+                    output = output['classification']
                 loss = criterion(output, target)
                 
                 running_loss += loss.item()

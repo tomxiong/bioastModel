@@ -1,0 +1,283 @@
+# BioAst模型管理系统 - 配置模板
+# 复制此文件为 config.yaml 并根据需要修改
+
+# 基础配置
+base:
+  project_name: "BioAst"
+  data_dir: "./bioast_dataset"  # 数据集路径
+  model_dir: "./models"         # 模型保存路径
+  experiment_dir: "./experiments"  # 实验结果路径
+  report_dir: "./reports"       # 报告保存路径
+  log_dir: "./logs"            # 日志路径
+  log_level: "INFO"            # 日志级别: DEBUG, INFO, WARNING, ERROR
+
+# 模型注册表配置
+model_registry:
+  storage_backend: "local"      # 存储后端: local, s3, azure
+  storage_path: "./registry"    # 本地存储路径
+  enable_versioning: true       # 启用版本控制
+  max_versions: 10             # 最大版本数
+  auto_backup: true            # 自动备份
+
+# 实验跟踪配置
+experiment:
+  tracking_backend: "sqlite"   # 跟踪后端: sqlite, postgresql, mysql
+  database_url: "sqlite:///experiments.db"  # 数据库连接
+  auto_log_metrics: true       # 自动记录指标
+  save_artifacts: true         # 保存训练产物
+  log_frequency: 10           # 指标记录频率(每N个epoch)
+
+# 仪表板配置
+dashboard:
+  host: "localhost"            # 服务器地址
+  port: 8080                  # 端口号
+  enable_auth: false          # 启用认证
+  theme: "default"            # 主题: default, dark, light
+  auto_refresh: 30            # 自动刷新间隔(秒)
+
+# 工作流配置
+workflow:
+  max_parallel_jobs: 2        # 最大并行任务数
+  retry_attempts: 3           # 重试次数
+  timeout_minutes: 120        # 超时时间(分钟)
+  enable_checkpoints: true    # 启用检查点
+  checkpoint_frequency: 10    # 检查点频率(每N个epoch)
+
+# 任务调度配置
+scheduler:
+  enable_scheduler: false     # 启用调度器
+  max_concurrent_tasks: 2     # 最大并发任务
+  task_timeout: 7200         # 任务超时(秒)
+  cleanup_interval: 3600     # 清理间隔(秒)
+
+# 报告生成配置
+report:
+  default_format: "html"      # 默认格式: json, markdown, html
+  include_charts: true        # 包含图表
+  chart_format: "png"         # 图表格式: png, svg, pdf
+  template_dir: "./templates" # 模板目录
+  auto_generate: true         # 自动生成报告
+
+# 存储配置
+storage:
+  local:
+    base_path: "./storage"
+    max_size_gb: 100          # 最大存储空间(GB)
+  
+  # S3配置(可选)
+  s3:
+    bucket_name: "bioast-models"
+    region: "us-west-2"
+    access_key: "your-access-key"
+    secret_key: "your-secret-key"
+  
+  # Azure配置(可选)
+  azure:
+    account_name: "bioast"
+    container_name: "models"
+    account_key: "your-account-key"
+
+# 安全配置
+security:
+  enable_encryption: false    # 启用加密
+  api_key_required: false     # 需要API密钥
+  allowed_hosts: ["localhost", "127.0.0.1"]  # 允许的主机
+  max_file_size_mb: 1000     # 最大文件大小(MB)
+
+# 性能配置
+performance:
+  enable_gpu: true           # 启用GPU
+  gpu_memory_fraction: 0.8   # GPU内存使用比例
+  num_workers: 4             # 数据加载器工作进程数
+  pin_memory: true           # 固定内存
+  enable_mixed_precision: false  # 启用混合精度
+
+# 通知配置
+notification:
+  enable_notifications: false  # 启用通知
+  
+  # 邮件通知
+  email:
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    username: "your-email@gmail.com"
+    password: "your-password"
+    recipients: ["admin@example.com"]
+  
+  # Slack通知
+  slack:
+    webhook_url: "https://hooks.slack.com/services/..."
+    channel: "#bioast-alerts"
+
+# 模型特定配置
+models:
+  # EfficientNet-B0配置
+  efficientnet_b0:
+    name: "EfficientNet-B0"
+    description: "轻量级高效模型"
+    algorithm: "efficientnet_b0"
+    default_config:
+      image_size: [70, 70]
+      batch_size: 32
+      epochs: 50
+      learning_rate: 0.001
+      optimizer: "adam"
+      weight_decay: 0.0001
+      dropout: 0.2
+  
+  # ResNet18-Improved配置
+  resnet18_improved:
+    name: "ResNet18-Improved"
+    description: "改进版ResNet18"
+    algorithm: "resnet18_improved"
+    default_config:
+      image_size: [70, 70]
+      batch_size: 32
+      epochs: 50
+      learning_rate: 0.001
+      optimizer: "adam"
+      weight_decay: 0.0001
+      dropout: 0.1
+  
+  # AirBubble-HybridNet配置
+  airbubble_hybrid_net:
+    name: "AirBubble-HybridNet"
+    description: "混合架构菌落检测模型"
+    algorithm: "airbubble_hybrid_net"
+    default_config:
+      image_size: [70, 70]
+      batch_size: 32
+      epochs: 50
+      learning_rate: 0.001
+      optimizer: "adam"
+      weight_decay: 0.0001
+      dropout: 0.15
+  
+  # Micro-ViT配置
+  micro_vit:
+    name: "Micro-ViT"
+    description: "微型Vision Transformer"
+    algorithm: "micro_vit"
+    default_config:
+      image_size: [70, 70]
+      batch_size: 16
+      epochs: 50
+      learning_rate: 0.0001
+      optimizer: "adamw"
+      weight_decay: 0.01
+      dropout: 0.1
+  
+  # ConvNeXt-Tiny配置
+  convnext_tiny:
+    name: "ConvNeXt-Tiny"
+    description: "现代卷积网络"
+    algorithm: "convnext_tiny"
+    default_config:
+      image_size: [70, 70]
+      batch_size: 32
+      epochs: 50
+      learning_rate: 0.001
+      optimizer: "adamw"
+      weight_decay: 0.05
+      dropout: 0.1
+
+# 数据集配置
+dataset:
+  # 数据增强配置
+  augmentation:
+    enable: true
+    rotation_range: 15        # 旋转角度范围
+    width_shift_range: 0.1    # 水平平移范围
+    height_shift_range: 0.1   # 垂直平移范围
+    zoom_range: 0.1          # 缩放范围
+    horizontal_flip: true     # 水平翻转
+    vertical_flip: false      # 垂直翻转
+    brightness_range: [0.8, 1.2]  # 亮度范围
+  
+  # 数据分割配置
+  split:
+    train_ratio: 0.7         # 训练集比例
+    val_ratio: 0.15          # 验证集比例
+    test_ratio: 0.15         # 测试集比例
+    stratify: true           # 分层采样
+    random_seed: 42          # 随机种子
+  
+  # 数据预处理配置
+  preprocessing:
+    normalize: true          # 标准化
+    mean: [0.485, 0.456, 0.406]  # RGB均值
+    std: [0.229, 0.224, 0.225]   # RGB标准差
+    resize_method: "bilinear"     # 缩放方法
+
+# 训练配置
+training:
+  # 早停配置
+  early_stopping:
+    enable: true
+    patience: 10             # 耐心值
+    min_delta: 0.001         # 最小改善
+    monitor: "val_accuracy"   # 监控指标
+    mode: "max"              # 模式: max, min
+  
+  # 学习率调度配置
+  lr_scheduler:
+    type: "step"             # 类型: step, cosine, plateau
+    step_size: 20            # 步长
+    gamma: 0.1               # 衰减因子
+    patience: 5              # 平台期耐心值
+  
+  # 损失函数配置
+  loss:
+    type: "cross_entropy"    # 损失函数类型
+    label_smoothing: 0.0     # 标签平滑
+    class_weights: null      # 类别权重
+  
+  # 优化器配置
+  optimizer:
+    type: "adam"             # 优化器类型
+    betas: [0.9, 0.999]      # Adam参数
+    eps: 1e-8                # 数值稳定性参数
+
+# 评估配置
+evaluation:
+  metrics: ["accuracy", "precision", "recall", "f1_score", "auc"]  # 评估指标
+  save_predictions: true    # 保存预测结果
+  save_confusion_matrix: true  # 保存混淆矩阵
+  save_roc_curve: true     # 保存ROC曲线
+  error_analysis: true     # 错误分析
+  top_k_accuracy: [1, 3]   # Top-K准确率
+
+# 可视化配置
+visualization:
+  plot_training_curves: true   # 绘制训练曲线
+  plot_confusion_matrix: true  # 绘制混淆矩阵
+  plot_roc_curve: true        # 绘制ROC曲线
+  plot_feature_maps: false    # 绘制特征图
+  save_format: "png"          # 保存格式
+  dpi: 300                   # 图像分辨率
+  figure_size: [10, 8]       # 图像尺寸
+
+# 部署配置
+deployment:
+  export_onnx: true          # 导出ONNX格式
+  export_torchscript: false  # 导出TorchScript
+  optimize_for_inference: true  # 推理优化
+  quantization: false        # 量化
+  pruning: false            # 剪枝
+
+# 监控配置
+monitoring:
+  enable_tensorboard: true   # 启用TensorBoard
+  enable_wandb: false       # 启用Weights & Biases
+  log_gradients: false      # 记录梯度
+  log_weights: false        # 记录权重
+  log_images: true          # 记录图像
+  log_frequency: 100        # 记录频率
+
+# 调试配置
+debug:
+  enable_debug: false       # 启用调试模式
+  save_intermediate: false  # 保存中间结果
+  profile_performance: false  # 性能分析
+  memory_profiling: false   # 内存分析
+  deterministic: true       # 确定性训练

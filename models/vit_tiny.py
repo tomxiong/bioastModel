@@ -15,7 +15,7 @@ from typing import Optional, Tuple
 class PatchEmbedding(nn.Module):
     """Convert image patches to embeddings."""
     
-    def __init__(self, img_size: int = 70, patch_size: int = 7, in_channels: int = 3, embed_dim: int = 192):
+    def __init__(self, img_size: int = 224, patch_size: int = 16, in_channels: int = 3, embed_dim: int = 192):
         super().__init__()
         self.img_size = img_size
         self.patch_size = patch_size
@@ -116,14 +116,14 @@ class VisionTransformerTiny(nn.Module):
     """
     Tiny Vision Transformer for colony detection.
     
-    Optimized for 70x70 images with reduced parameters while maintaining
+    Optimized for 224x224 images with reduced parameters while maintaining
     the core transformer architecture benefits.
     """
     
     def __init__(
         self,
-        img_size: int = 70,
-        patch_size: int = 7,
+        img_size: int = 224,
+        patch_size: int = 16,
         in_channels: int = 3,
         num_classes: int = 2,
         embed_dim: int = 192,
@@ -137,10 +137,15 @@ class VisionTransformerTiny(nn.Module):
         
         self.num_classes = num_classes
         self.embed_dim = embed_dim
+        self.img_size = img_size
+        self.patch_size = patch_size
         
         # Patch embedding
         self.patch_embed = PatchEmbedding(img_size, patch_size, in_channels, embed_dim)
         num_patches = self.patch_embed.num_patches
+        
+        # Debug print to verify dimensions
+        print(f"ViT-Tiny initialized: img_size={img_size}, patch_size={patch_size}, num_patches={num_patches}")
         
         # Class token and position embedding
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
@@ -242,8 +247,8 @@ def create_vit_tiny(num_classes: int = 2, dropout_rate: float = 0.1) -> VisionTr
         VisionTransformerTiny model
     """
     model = VisionTransformerTiny(
-        img_size=70,
-        patch_size=7,
+        img_size=224,
+        patch_size=16,
         in_channels=3,
         num_classes=num_classes,
         embed_dim=192,
@@ -273,7 +278,7 @@ if __name__ == "__main__":
     
     # Test forward pass
     batch_size = 2
-    test_input = torch.randn(batch_size, 3, 70, 70)
+    test_input = torch.randn(batch_size, 3, 224, 224)
     
     with torch.no_grad():
         output = model(test_input)

@@ -1,0 +1,157 @@
+# Core dependencies
+numpy>=1.21.0
+pandas>=1.3.0
+scikit-learn>=1.0.0
+joblib>=1.1.0
+
+# Machine Learning frameworks
+torch>=1.9.0
+torchvision>=0.10.0
+tensorflow>=2.6.0
+keras>=2.6.0
+xgboost>=1.5.0
+lightgbm>=3.3.0
+
+# Data visualization
+matplotlib>=3.4.0
+seaborn>=0.11.0
+plotly>=5.0.0
+bokeh>=2.4.0
+
+# Web framework
+Flask>=2.0.0
+Flask-CORS>=3.0.10
+Flask-SQLAlchemy>=2.5.1
+Werkzeug>=2.0.0
+
+# Database
+SQLAlchemy>=1.4.0
+sqlite3
+psycopg2-binary>=2.9.0  # PostgreSQL adapter
+pymongo>=3.12.0  # MongoDB adapter
+
+# Configuration and serialization
+PyYAML>=5.4.0
+toml>=0.10.2
+jsonschema>=3.2.0
+
+# Logging and monitoring
+loguru>=0.5.3
+rich>=10.0.0
+tqdm>=4.62.0
+
+# File handling
+Pillow>=8.3.0
+h5py>=3.3.0
+pyarrow>=5.0.0
+
+# Utilities
+requests>=2.26.0
+click>=8.0.0
+python-dateutil>=2.8.2
+pytz>=2021.1
+validators>=0.18.2
+
+# Template engine
+Jinja2>=3.0.0
+Markdown>=3.3.0
+
+# Async support
+aiofiles>=0.7.0
+aiohttp>=3.7.0
+
+# Testing (optional)
+pytest>=6.2.0
+pytest-cov>=2.12.0
+pytest-asyncio>=0.15.0
+
+# Development tools (optional)
+black>=21.0.0
+flake8>=3.9.0
+isort>=5.9.0
+mypy>=0.910
+
+# Jupyter support (optional)
+jupyter>=1.0.0
+ipykernel>=6.0.0
+
+# Additional ML utilities
+imbalanced-learn>=0.8.0
+shap>=0.39.0
+optuna>=2.10.0
+mlflow>=1.20.0
+
+# Security
+cryptography>=3.4.0
+bcrypt>=3.2.0
+
+# Performance
+numba>=0.54.0
+cython>=0.29.0
+
+# Cloud storage (optional)
+boto3>=1.18.0  # AWS S3
+azure-storage-blob>=12.8.0  # Azure Blob
+google-cloud-storage>=1.42.0  # Google Cloud Storage
+
+# Notification (optional)
+slack-sdk>=3.11.0
+smtplib
+
+# API documentation (optional)
+flasgger>=0.9.5
+swagger-ui-bundle>=0.0.8
+
+# Compression
+zipfile36>=0.1.3
+tarfile
+
+# System monitoring
+psutil>=5.8.0
+GPUtil>=1.4.0
+
+# Model serving (optional)
+fastapi>=0.68.0
+uvicorn>=0.15.0
+gunicorn>=20.1.0
+
+# Data validation
+cerberus>=1.3.4
+great-expectations>=0.13.0
+
+# Workflow orchestration (optional)
+airflow>=2.1.0
+prefect>=0.15.0
+
+# Version control for data/models
+dvc>=2.6.0
+git-python>=1.0.3
+
+# Experiment tracking
+wandb>=0.12.0
+tensorboard>=2.6.0
+
+# Model interpretability
+lime>=0.2.0.1
+eli5>=0.11.0
+
+# Time series (optional)
+statsmodels>=0.12.0
+fbprophet>=0.7.1
+
+# Natural Language Processing (optional)
+nltk>=3.6.0
+spacy>=3.1.0
+transformers>=4.9.0
+
+# Computer Vision (optional)
+opencv-python>=4.5.0
+scikit-image>=0.18.0
+
+# Distributed computing (optional)
+dask>=2021.7.0
+ray>=1.5.0
+
+# Memory optimization
+memory-profiler>=0.58.0
+objgraph>=3.5.0

@@ -1,6 +1,6 @@
 # Comprehensive Model Analysis Report
 
-Generated on: 2025-08-03 12:27:51
+Generated on: 2025-08-05 00:03:54
 Total models analyzed: 8
 
 ## Executive Summary
@@ -11,49 +11,49 @@ This report presents a comprehensive analysis of 8 deep learning models trained 
 
 | Rank | Model | Accuracy | Parameters | Epochs | Efficiency Score |
 |------|-------|----------|------------|--------|------------------|
-| 1 | resnet18_improved | 0.9870 | 11,260,000 | 21 | 0.623 |
-| 2 | mic_mobilenetv3 | 0.9851 | 1,138,137 | 15 | 0.857 |
-| 3 | airbubble_hybrid_net | 0.9851 | 750,142 | 33 | 0.988 |
-| 4 | efficientnet_b0 | 0.9833 | 1,560,000 | 16 | 0.785 |
-| 5 | convnext_tiny | 0.9833 | 28,600,000 | 39 | 0.603 |
-| 6 | micro_vit | 0.9833 | 3,265,402 | 39 | 0.683 |
-| 7 | vit_tiny | 0.9665 | 2,720,000 | 19 | 0.692 |
-| 8 | coatnet | 0.9628 | 26,042,722 | 27 | 0.592 |
+| 1 | efficientnet_b0 | 0.9796 | 1,560,000 | 2 | 0.825 |
+| 2 | mic_mobilenetv3 | 0.9740 | 1,138,137 | 2 | 0.890 |
+| 3 | resnet18_improved | 0.9684 | 11,260,000 | 2 | 0.655 |
+| 4 | airbubble_hybrid_net | 0.9684 | 750,142 | 2 | 1.017 |
+| 5 | micro_vit | 0.9610 | 3,265,402 | 2 | 0.713 |
+| 6 | vit_tiny | 0.9591 | 2,720,000 | 2 | 0.729 |
+| 7 | convnext_tiny | 0.9554 | 28,600,000 | 2 | 0.631 |
+| 8 | coatnet | 0.9498 | 26,042,722 | 2 | 0.628 |
 
 
 
 ## Base Models
 
-**Best Performer**: resnet18_improved (0.9870 accuracy)
+**Best Performer**: efficientnet_b0 (0.9796 accuracy)
 
-- **Average Accuracy**: 0.9766
+- **Average Accuracy**: 0.9625
 - **Parameter Range**: 1,560,000 - 28,600,000
 - **Models Count**: 5
 
 
 ## Enhanced Models
 
-**Best Performer**: mic_mobilenetv3 (0.9851 accuracy)
+**Best Performer**: mic_mobilenetv3 (0.9740 accuracy)
 
-- **Average Accuracy**: 0.9845
+- **Average Accuracy**: 0.9678
 - **Parameter Range**: 750,142 - 3,265,402
 - **Models Count**: 3
 
 
 ## Lightweight Models
 
-**Best Performer**: mic_mobilenetv3 (0.9851 accuracy)
+**Best Performer**: efficientnet_b0 (0.9796 accuracy)
 
-- **Average Accuracy**: 0.9807
+- **Average Accuracy**: 0.9684
 - **Parameter Range**: 750,142 - 3,265,402
 - **Models Count**: 5
 
 
 ## Heavy Models
 
-**Best Performer**: resnet18_improved (0.9870 accuracy)
+**Best Performer**: resnet18_improved (0.9684 accuracy)
 
-- **Average Accuracy**: 0.9777
+- **Average Accuracy**: 0.9579
 - **Parameter Range**: 11,260,000 - 28,600,000
 - **Models Count**: 3
 
@@ -62,19 +62,19 @@ This report presents a comprehensive analysis of 8 deep learning models trained 
 ## Deployment Recommendations
 
 ### 🏆 Best Overall Performance
-**resnet18_improved** - 0.9870 accuracy
-- Parameters: 11,260,000
-- Training epochs: 21
+**efficientnet_b0** - 0.9796 accuracy
+- Parameters: 1,560,000
+- Training epochs: 2
 - **Use case**: When maximum accuracy is required
 
 ### ⚡ Best Lightweight Model
-**airbubble_hybrid_net** - 0.9851 accuracy
+**airbubble_hybrid_net** - 0.9684 accuracy
 - Parameters: 750,142
 - **Use case**: Mobile deployment, edge computing
 
 ### 🎯 Most Efficient Model
-**airbubble_hybrid_net** - Efficiency score: 0.988
-- Accuracy: 0.9851
+**airbubble_hybrid_net** - Efficiency score: 1.017
+- Accuracy: 0.9684
 - Parameters: 750,142
 - **Use case**: Balanced performance and resource usage
 
@@ -83,17 +83,17 @@ This report presents a comprehensive analysis of 8 deep learning models trained 
 ## Technical Insights
 
 ### CNN Architectures
-- Average accuracy: 0.9848
+- Average accuracy: 0.9691
 - Models: 5
-- Best: resnet18_improved
+- Best: efficientnet_b0
 
 ### Transformer Architectures
-- Average accuracy: 0.9749
+- Average accuracy: 0.9600
 - Models: 2
 - Best: micro_vit
 
 ### MIC-Specialized Enhanced Models
-- Average accuracy: 0.9845
+- Average accuracy: 0.9678
 - All models show excellent performance with specialized optimizations
 - Demonstrate effectiveness of domain-specific architectural improvements
 
@@ -101,85 +101,85 @@ This report presents a comprehensive analysis of 8 deep learning models trained 
 
 ## Detailed Model Information
 
-### resnet18_improved
+### efficientnet_b0
 
-- **Best Validation Accuracy**: 0.9870
-- **Final Training Accuracy**: 0.9811
-- **Parameters**: 11,260,000
-- **Training Epochs**: 21
-- **Efficiency Score**: 0.623
-- **Accuracy per Million Parameters**: 0.088
-- **Experiment Path**: `experiments\experiment_20250802_164948\resnet18_improved`
+- **Best Validation Accuracy**: 0.9796
+- **Final Training Accuracy**: 0.9736
+- **Parameters**: 1,560,000
+- **Training Epochs**: 2
+- **Efficiency Score**: 0.825
+- **Accuracy per Million Parameters**: 0.628
+- **Experiment Path**: `experiments\experiment_20250803_231330\efficientnet_b0`
 
 ### mic_mobilenetv3
 
-- **Best Validation Accuracy**: 0.9851
-- **Final Training Accuracy**: 0.9776
+- **Best Validation Accuracy**: 0.9740
+- **Final Training Accuracy**: 0.9731
 - **Parameters**: 1,138,137
-- **Training Epochs**: 15
-- **Efficiency Score**: 0.857
-- **Accuracy per Million Parameters**: 0.866
-- **Experiment Path**: `experiments\experiment_20250803_101438\mic_mobilenetv3`
+- **Training Epochs**: 2
+- **Efficiency Score**: 0.890
+- **Accuracy per Million Parameters**: 0.856
+- **Experiment Path**: `experiments\experiment_20250803_230714\mic_mobilenetv3`
+
+### resnet18_improved
+
+- **Best Validation Accuracy**: 0.9684
+- **Final Training Accuracy**: 0.9723
+- **Parameters**: 11,260,000
+- **Training Epochs**: 2
+- **Efficiency Score**: 0.655
+- **Accuracy per Million Parameters**: 0.086
+- **Experiment Path**: `experiments\experiment_20250803_231744\resnet18_improved`
 
 ### airbubble_hybrid_net
 
-- **Best Validation Accuracy**: 0.9851
-- **Final Training Accuracy**: 0.9838
+- **Best Validation Accuracy**: 0.9684
+- **Final Training Accuracy**: 0.9650
 - **Parameters**: 750,142
-- **Training Epochs**: 33
-- **Efficiency Score**: 0.988
-- **Accuracy per Million Parameters**: 1.313
-- **Experiment Path**: `experiments\experiment_20250803_115344\airbubble_hybrid_net`
-
-### efficientnet_b0
-
-- **Best Validation Accuracy**: 0.9833
-- **Final Training Accuracy**: 0.9828
-- **Parameters**: 1,560,000
-- **Training Epochs**: 16
-- **Efficiency Score**: 0.785
-- **Accuracy per Million Parameters**: 0.630
-- **Experiment Path**: `experiments\experiment_20250802_140818\efficientnet_b0`
-
-### convnext_tiny
-
-- **Best Validation Accuracy**: 0.9833
-- **Final Training Accuracy**: 0.9760
-- **Parameters**: 28,600,000
-- **Training Epochs**: 39
-- **Efficiency Score**: 0.603
-- **Accuracy per Million Parameters**: 0.034
-- **Experiment Path**: `experiments\experiment_20250802_231639\convnext_tiny`
+- **Training Epochs**: 2
+- **Efficiency Score**: 1.017
+- **Accuracy per Million Parameters**: 1.291
+- **Experiment Path**: `experiments\experiment_20250803_230926\airbubble_hybrid_net`
 
 ### micro_vit
 
-- **Best Validation Accuracy**: 0.9833
-- **Final Training Accuracy**: 0.9817
+- **Best Validation Accuracy**: 0.9610
+- **Final Training Accuracy**: 0.9480
 - **Parameters**: 3,265,402
-- **Training Epochs**: 39
-- **Efficiency Score**: 0.683
-- **Accuracy per Million Parameters**: 0.301
-- **Experiment Path**: `experiments\experiment_20250803_102845\micro_vit`
+- **Training Epochs**: 2
+- **Efficiency Score**: 0.713
+- **Accuracy per Million Parameters**: 0.294
+- **Experiment Path**: `experiments\experiment_20250803_230459\micro_vit`
 
 ### vit_tiny
 
-- **Best Validation Accuracy**: 0.9665
-- **Final Training Accuracy**: 0.9539
+- **Best Validation Accuracy**: 0.9591
+- **Final Training Accuracy**: 0.9437
 - **Parameters**: 2,720,000
-- **Training Epochs**: 19
-- **Efficiency Score**: 0.692
-- **Accuracy per Million Parameters**: 0.355
-- **Experiment Path**: `experiments\experiment_20250803_020217\vit_tiny`
+- **Training Epochs**: 2
+- **Efficiency Score**: 0.729
+- **Accuracy per Million Parameters**: 0.353
+- **Experiment Path**: `experiments\experiment_20250803_230248\vit_tiny`
+
+### convnext_tiny
+
+- **Best Validation Accuracy**: 0.9554
+- **Final Training Accuracy**: 0.9515
+- **Parameters**: 28,600,000
+- **Training Epochs**: 2
+- **Efficiency Score**: 0.631
+- **Accuracy per Million Parameters**: 0.033
+- **Experiment Path**: `experiments\experiment_20250803_233236\convnext_tiny`
 
 ### coatnet
 
-- **Best Validation Accuracy**: 0.9628
-- **Final Training Accuracy**: 0.9488
+- **Best Validation Accuracy**: 0.9498
+- **Final Training Accuracy**: 0.9095
 - **Parameters**: 26,042,722
-- **Training Epochs**: 27
-- **Efficiency Score**: 0.592
-- **Accuracy per Million Parameters**: 0.037
-- **Experiment Path**: `experiments\experiment_20250803_032628\coatnet`
+- **Training Epochs**: 2
+- **Efficiency Score**: 0.628
+- **Accuracy per Million Parameters**: 0.036
+- **Experiment Path**: `experiments\experiment_20250803_232548\coatnet`
 
 ## Conclusion
 

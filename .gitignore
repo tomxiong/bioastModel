@@ -213,3 +213,6 @@ Thumbs.db
 
 # CloudStudio deployment
 .cloudstudio/
+
+#nodejs
+node_modules/
