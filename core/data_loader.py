@@ -41,9 +41,83 @@ class MICDataLoader:
     
     def _load_real_data(self):
         """加载真实数据"""
-        # 这里应该实现真实数据的加载逻辑
-        # 由于没有真实数据，我们生成合成数据
-        self._generate_synthetic_data()
+        positive_dir = os.path.join(self.data_dir, 'positive')
+        negative_dir = os.path.join(self.data_dir, 'negative')
+        
+        if not (os.path.exists(positive_dir) and os.path.exists(negative_dir)):
+            self.logger.warning("Positive or negative directories not found, generating synthetic data")
+            self._generate_synthetic_data()
+            return
+        
+        # 加载图像文件
+        images = []
+        labels = []
+        
+        # 加载positive样本（递归搜索所有子目录）
+        for root, dirs, files in os.walk(positive_dir):
+            for filename in files:
+                if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    img_path = os.path.join(root, filename)
+                    image = cv2.imread(img_path)
+                    if image is not None:
+                        # 调整大小到指定尺寸
+                        image = cv2.resize(image, self.image_size)
+                        # 转换BGR到RGB
+                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        # 归一化到[0,1]
+                        image = image.astype(np.float32) / 255.0
+                        images.append(image)
+                        labels.append(1)  # positive
+        
+        # 加载negative样本（递归搜索所有子目录）
+        for root, dirs, files in os.walk(negative_dir):
+            for filename in files:
+                if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    img_path = os.path.join(root, filename)
+                    image = cv2.imread(img_path)
+                    if image is not None:
+                        # 调整大小到指定尺寸
+                        image = cv2.resize(image, self.image_size)
+                        # 转换BGR到RGB
+                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        # 归一化到[0,1]
+                        image = image.astype(np.float32) / 255.0
+                        images.append(image)
+                        labels.append(0)  # negative
+        
+        if len(images) == 0:
+            self.logger.warning("No valid images found, generating synthetic data")
+            self._generate_synthetic_data()
+            return
+        
+        images = np.array(images)
+        labels = np.array(labels)
+        
+        self.logger.info(f"Loaded {len(images)} real images ({np.sum(labels)} positive, {len(labels) - np.sum(labels)} negative)")
+        
+        # 检查是否有预定义的数据分割
+        split_file = os.path.join(self.data_dir, 'test_split.json')
+        if os.path.exists(split_file):
+            with open(split_file, 'r') as f:
+                split_info = json.load(f)
+            # 这里可以根据split_info进行数据分割
+            # 暂时使用随机分割
+        
+        # 划分数据集
+        # 训练集: 70%, 验证集: 15%, 测试集: 15%
+        X_temp, X_test, y_temp, y_test = train_test_split(
+            images, labels, test_size=0.15, random_state=42, stratify=labels
+        )
+        
+        X_train, X_val, y_train, y_val = train_test_split(
+            X_temp, y_temp, test_size=0.176, random_state=42, stratify=y_temp  # 0.176 ≈ 0.15/0.85
+        )
+        
+        self._train_data = (X_train, y_train)
+        self._val_data = (X_val, y_val)
+        self._test_data = (X_test, y_test)
+        
+        self.logger.info(f"Split into {len(X_train)} training, {len(X_val)} validation, {len(X_test)} test samples")
     
     def _generate_synthetic_data(self):
         """生成合成数据用于训练和测试"""
