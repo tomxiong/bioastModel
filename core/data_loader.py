@@ -53,35 +53,37 @@ class MICDataLoader:
         images = []
         labels = []
         
-        # 加载positive样本
-        for filename in os.listdir(positive_dir):
-            if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-                img_path = os.path.join(positive_dir, filename)
-                image = cv2.imread(img_path)
-                if image is not None:
-                    # 调整大小到指定尺寸
-                    image = cv2.resize(image, self.image_size)
-                    # 转换BGR到RGB
-                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    # 归一化到[0,1]
-                    image = image.astype(np.float32) / 255.0
-                    images.append(image)
-                    labels.append(1)  # positive
+        # 加载positive样本（递归搜索所有子目录）
+        for root, dirs, files in os.walk(positive_dir):
+            for filename in files:
+                if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    img_path = os.path.join(root, filename)
+                    image = cv2.imread(img_path)
+                    if image is not None:
+                        # 调整大小到指定尺寸
+                        image = cv2.resize(image, self.image_size)
+                        # 转换BGR到RGB
+                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        # 归一化到[0,1]
+                        image = image.astype(np.float32) / 255.0
+                        images.append(image)
+                        labels.append(1)  # positive
         
-        # 加载negative样本
-        for filename in os.listdir(negative_dir):
-            if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-                img_path = os.path.join(negative_dir, filename)
-                image = cv2.imread(img_path)
-                if image is not None:
-                    # 调整大小到指定尺寸
-                    image = cv2.resize(image, self.image_size)
-                    # 转换BGR到RGB
-                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    # 归一化到[0,1]
-                    image = image.astype(np.float32) / 255.0
-                    images.append(image)
-                    labels.append(0)  # negative
+        # 加载negative样本（递归搜索所有子目录）
+        for root, dirs, files in os.walk(negative_dir):
+            for filename in files:
+                if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    img_path = os.path.join(root, filename)
+                    image = cv2.imread(img_path)
+                    if image is not None:
+                        # 调整大小到指定尺寸
+                        image = cv2.resize(image, self.image_size)
+                        # 转换BGR到RGB
+                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        # 归一化到[0,1]
+                        image = image.astype(np.float32) / 255.0
+                        images.append(image)
+                        labels.append(0)  # negative
         
         if len(images) == 0:
             self.logger.warning("No valid images found, generating synthetic data")

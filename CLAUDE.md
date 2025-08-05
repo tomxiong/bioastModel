@@ -52,19 +52,19 @@ The project has implemented and trained **15+ different model architectures** wi
 **Single Model Training**:
 ```bash
 # List available models
-python train_single_model.py --list_models
+.venv\Scripts\python train_single_model.py --list_models
 
 # Train specific model with custom parameters
-python train_single_model.py --model efficientnet_b0 --epochs 30 --batch_size 32 --lr 0.001
+.venv\Scripts\python train_single_model.py --model efficientnet_b0 --epochs 30 --batch_size 32 --lr 0.001
 ```
 
 **Batch Training**:
 ```bash
 # Train all models in sequence
-python scripts/auto_train_sequence.py
+.venv\Scripts\python scripts/auto_train_sequence.py
 
 # Train multiple models
-python train_all_models.py
+.venv\Scripts\python train_all_models.py
 ```
 
 ### Model Evaluation and Testing
@@ -72,31 +72,31 @@ python train_all_models.py
 **Batch Testing**:
 ```bash
 # Test all trained models
-python scripts/batch_test_models.py
+.venv\Scripts\python scripts/batch_test_models.py
 
 # Validate ONNX models
-python scripts/batch_validate_all_onnx_models.py
+.venv\Scripts\python scripts/batch_validate_all_onnx_models.py
 ```
 
 **Individual Model Analysis**:
 ```bash
 # Generate comprehensive analysis
-python scripts/comprehensive_model_analysis.py
+.venv\Scripts\python scripts/comprehensive_model_analysis.py
 
 # Compare model performance
-python scripts/compare_models.py
+.venv\Scripts\python scripts/compare_models.py
 ```
 
 ### ONNX Conversion
 
 **Convert Single Model**:
 ```bash
-python scripts/convert_single_model_to_onnx.py --model <model_name>
+.venv\Scripts\python scripts/convert_single_model_to_onnx.py --model <model_name>
 ```
 
 **Batch Conversion**:
 ```bash
-python scripts/batch_convert_models_to_onnx.py
+.venv\Scripts\python scripts/batch_convert_models_to_onnx.py
 ```
 
 ### Monitoring and Analysis
@@ -104,17 +104,17 @@ python scripts/batch_convert_models_to_onnx.py
 **Training Progress**:
 ```bash
 # Monitor specific model training
-python scripts/monitor_<model_name>_training.py
+.venv\Scripts\python scripts/monitor_<model_name>_training.py
 
 # Check training progress
-python scripts/check_test_progress.py
+.venv\Scripts\python scripts/check_test_progress.py
 ```
 
 **Generate Reports**:
 ```bash
 # Generate analysis reports
-python scripts/generate_detailed_analysis.py
-python scripts/generate_final_analysis.py
+.venv\Scripts\python scripts/generate_detailed_analysis.py
+.venv\Scripts\python scripts/generate_final_analysis.py
 ```
 
 ## Model Performance Hierarchy
@@ -176,12 +176,47 @@ Data loading automatically handles this structure via `BioastDataset` class.
 
 ## Development Environment
 
-**Dependencies**: No requirements.txt found - main dependencies appear to be:
+### Python Environment Setup
+**IMPORTANT**: This project uses a local virtual environment (`.venv`) and uv for package management.
+
+**Environment Rules**:
+- **Always use the local .venv environment**: All Python commands should be run within the `.venv` virtual environment
+- **Package Installation**: Use `uv pip install <package>` instead of `pip install` for all new package installations
+- **Environment Activation**: Ensure `.venv` is activated before running any Python scripts
+- **Encoding Fix**: Set console encoding to UTF-8 to avoid Chinese text display issues
+- **Code Standards**: All Python scripts should use English for console output to avoid encoding issues
+
+**Package Management Commands**:
+```bash
+# Install new packages (REQUIRED method)
+uv pip install <package_name>
+
+# Install from requirements
+uv pip install -r requirements.txt
+
+# List installed packages
+uv pip list
+
+# Upgrade packages
+uv pip install --upgrade <package_name>
+```
+
+**Console Encoding Setup** (Windows):
+```bash
+# Set UTF-8 encoding before running Python scripts
+chcp 65001
+
+# Or run Python with UTF-8 encoding
+$env:PYTHONIOENCODING="utf-8"; .venv/Scripts/python your_script.py
+```
+
+**Dependencies**: Main dependencies include:
 - PyTorch + torchvision
 - scikit-learn
 - matplotlib, seaborn
 - PIL/Pillow
 - ONNX, onnxruntime
+- uv (package manager)
 
 **GPU Support**: All training scripts detect and use CUDA when available.
 
