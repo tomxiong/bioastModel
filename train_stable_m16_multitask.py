@@ -33,6 +33,12 @@ class StableM16MultiTaskTrainer:
         self.config = config
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
+        # 设置混合精度训练
+        self.use_amp = config.get('use_amp', False)
+        self.scaler = None
+        if self.use_amp and self.device.type == 'cuda':
+            self.scaler = torch.amp.GradScaler('cuda')
+        
         # 设置日志
         self.setup_logging()
         
@@ -125,34 +131,38 @@ class StableM16MultiTaskTrainer:
             image_size=(70, 70)
         )
         
-        # 创建数据加载器 - 使用稳定配置
-        batch_size = self.config.get('batch_size', 16)
+        # 创建数据加载器 - 使用优化配置
+        batch_size = self.config.get('batch_size', 32)
+        num_workers = self.config.get('num_workers', 4)
         
         train_loader = DataLoader(
             train_dataset,
             batch_size=batch_size,
             shuffle=True,
-            num_workers=0,  # 使用0避免多进程问题
+            num_workers=num_workers,
             pin_memory=True,
-            collate_fn=stable_multitask_collate_fn
+            collate_fn=stable_multitask_collate_fn,
+            persistent_workers=True if num_workers > 0 else False
         )
         
         val_loader = DataLoader(
             val_dataset,
             batch_size=batch_size,
             shuffle=False,
-            num_workers=0,
+            num_workers=num_workers,
             pin_memory=True,
-            collate_fn=stable_multitask_collate_fn
+            collate_fn=stable_multitask_collate_fn,
+            persistent_workers=True if num_workers > 0 else False
         )
         
         test_loader = DataLoader(
             test_dataset,
             batch_size=batch_size,
             shuffle=False,
-            num_workers=0,
+            num_workers=num_workers,
             pin_memory=True,
-            collate_fn=stable_multitask_collate_fn
+            collate_fn=stable_multitask_collate_fn,
+            persistent_workers=True if num_workers > 0 else False
         )
         
         task_info = train_dataset.task_info
@@ -247,36 +257,71 @@ class StableM16MultiTaskTrainer:
                 
                 self.optimizer.zero_grad()
                 
-                # 前向传播
-                outputs = self.model(images)
-                
-                # 检查模型输出
-                skip_batch = False
-                for key, output in outputs.items():
-                    if torch.isnan(output).any() or torch.isinf(output).any():
-                        self.logger.warning(f"批次 {batch_idx} 输出 {key} 包含NaN或Inf，跳过")
-                        skip_batch = True
-                        break
-                
-                if skip_batch:
-                    continue
-                
-                # 计算损失
-                loss = self.compute_loss(outputs, batch)
-                
-                # 检查损失
-                if torch.isnan(loss) or torch.isinf(loss) or loss > 100:
-                    self.logger.warning(f"批次 {batch_idx} 损失异常: {loss.item():.6f}，跳过")
-                    continue
-                
-                # 反向传播
-                loss.backward()
-                
-                # 梯度裁剪
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
-                
-                # 更新权重
-                self.optimizer.step()
+                # 前向传播 - 支持混合精度
+                if self.use_amp and self.scaler is not None:
+                    with torch.amp.autocast('cuda'):
+                        outputs = self.model(images)
+                        
+                        # 检查模型输出
+                        skip_batch = False
+                        for key, output in outputs.items():
+                            if torch.isnan(output).any() or torch.isinf(output).any():
+                                self.logger.warning(f"批次 {batch_idx} 输出 {key} 包含NaN或Inf，跳过")
+                                skip_batch = True
+                                break
+                        
+                        if skip_batch:
+                            continue
+                        
+                        # 计算损失
+                        loss = self.compute_loss(outputs, batch)
+                        
+                        # 检查损失
+                        if torch.isnan(loss) or torch.isinf(loss) or loss > 100:
+                            self.logger.warning(f"批次 {batch_idx} 损失异常: {loss.item():.6f}，跳过")
+                            continue
+                    
+                    # 反向传播 - 混合精度
+                    self.scaler.scale(loss).backward()
+                    
+                    # 梯度裁剪
+                    self.scaler.unscale_(self.optimizer)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                    
+                    # 更新权重
+                    self.scaler.step(self.optimizer)
+                    self.scaler.update()
+                else:
+                    # 标准精度训练
+                    outputs = self.model(images)
+                    
+                    # 检查模型输出
+                    skip_batch = False
+                    for key, output in outputs.items():
+                        if torch.isnan(output).any() or torch.isinf(output).any():
+                            self.logger.warning(f"批次 {batch_idx} 输出 {key} 包含NaN或Inf，跳过")
+                            skip_batch = True
+                            break
+                    
+                    if skip_batch:
+                        continue
+                    
+                    # 计算损失
+                    loss = self.compute_loss(outputs, batch)
+                    
+                    # 检查损失
+                    if torch.isnan(loss) or torch.isinf(loss) or loss > 100:
+                        self.logger.warning(f"批次 {batch_idx} 损失异常: {loss.item():.6f}，跳过")
+                        continue
+                    
+                    # 反向传播
+                    loss.backward()
+                    
+                    # 梯度裁剪
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                    
+                    # 更新权重
+                    self.optimizer.step()
                 
                 total_loss += loss.item()
                 valid_batches += 1
@@ -432,16 +477,20 @@ class StableM16MultiTaskTrainer:
     
     def train(self):
         """训练模型"""
-        self.logger.info("=== 稳定的m16多任务MobileNetV3训练开始 ===")
-        self.logger.info(f"模型: Enhanced MobileNetV3-MultiTask (stable m16)")
+        self.logger.info("=== 优化的m16多任务MobileNetV3训练开始 ===")
+        self.logger.info(f"模型: Enhanced MobileNetV3-MultiTask (optimized m16)")
         self.logger.info(f"生长级别类别数: {self.model.growth_level_classes}")
         self.logger.info(f"生长模式类别数: {self.model.growth_pattern_classes}")
         self.logger.info(f"干扰因素类别数: {self.model.interference_classes}")
         self.logger.info(f"精细分类类别数: {self.model.fine_grained_classes}")
         self.logger.info(f"批次大小: {self.config['batch_size']}")
         self.logger.info(f"学习率: {self.config['learning_rate']}")
+        self.logger.info(f"模型宽度倍数: {self.config['width_mult']}")
+        self.logger.info(f"Dropout率: {self.config['dropout_rate']}")
         self.logger.info(f"训练轮数: {self.config['epochs']}")
         self.logger.info(f"设备: {self.device}")
+        self.logger.info(f"混合精度训练: {'启用' if self.use_amp else '禁用'}")
+        self.logger.info(f"数据加载器工作进程: {self.config.get('num_workers', 0)}")
         self.logger.info(f"任务权重: {self.task_weights}")
         self.logger.info("=" * 57)
         
@@ -499,11 +548,13 @@ def stable_multitask_collate_fn(batch):
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description='稳定的m16多任务MobileNetV3训练')
-    parser.add_argument('--batch_size', type=int, default=16, help='批次大小')
-    parser.add_argument('--epochs', type=int, default=50, help='训练轮数')
-    parser.add_argument('--lr', type=float, default=0.001, help='学习率')
-    parser.add_argument('--width_mult', type=float, default=1.0, help='模型宽度倍数')
-    parser.add_argument('--dropout_rate', type=float, default=0.2, help='Dropout率')
+    parser.add_argument('--batch_size', type=int, default=32, help='批次大小')
+    parser.add_argument('--epochs', type=int, default=100, help='训练轮数')
+    parser.add_argument('--lr', type=float, default=0.003, help='学习率')
+    parser.add_argument('--width_mult', type=float, default=1.2, help='模型宽度倍数')
+    parser.add_argument('--dropout_rate', type=float, default=0.15, help='Dropout率')
+    parser.add_argument('--use_amp', action='store_true', help='使用混合精度训练')
+    parser.add_argument('--num_workers', type=int, default=4, help='数据加载器工作进程数')
     
     args = parser.parse_args()
     
@@ -515,6 +566,8 @@ def main():
         'width_mult': args.width_mult,
         'dropout_rate': args.dropout_rate,
         'weight_decay': 1e-4,
+        'use_amp': args.use_amp,
+        'num_workers': args.num_workers,
         'task_weights': {
             'growth_level': 1.0,
             'growth_pattern': 1.0,
