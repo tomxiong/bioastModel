@@ -274,6 +274,7 @@ Epoch 2 结果:
 #### 配置2: 平衡训练 (推荐)
 ```bash
 --batch_size 32 --epochs 80 --lr 0.003 --width_mult 1.2 --dropout_rate 0.15 --num_workers 4
+./.venv311/Scripts/python train_stable_m16_multitask.py --batch_size 32 --epochs 100 --lr 0.003 --width_mult 1.2 --dropout_rate 0.15 --num_workers 4
 ```
 - 适用场景: 生产环境部署
 - 显存要求: ≥4GB
