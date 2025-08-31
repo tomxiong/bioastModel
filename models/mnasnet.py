@@ -206,7 +206,7 @@ if __name__ == "__main__":
     model_0_5 = create_mnasnet_0_5(num_classes=2)
     model_1_0 = create_mnasnet_1_0(num_classes=2)
     
-    x = torch.randn(1, 3, 224, 224)
+    x = torch.randn(1, 3, 70, 70)
     
     print("MNASNet 0.5:")
     print(f"参数量: {sum(p.numel() for p in model_0_5.parameters()) / 1e6:.1f}M")

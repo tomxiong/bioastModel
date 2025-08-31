@@ -200,7 +200,7 @@ if __name__ == "__main__":
     model_121 = create_densenet121(num_classes=2)
     model_169 = create_densenet169(num_classes=2)
     
-    x = torch.randn(1, 3, 224, 224)
+    x = torch.randn(1, 3, 70, 70)
     
     print("DenseNet-121:")
     print(f"参数量: {sum(p.numel() for p in model_121.parameters()) / 1e6:.1f}M")

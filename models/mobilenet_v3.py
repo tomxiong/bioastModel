@@ -239,7 +239,7 @@ if __name__ == "__main__":
     model_large = create_mobilenetv3_large(num_classes=2)
     model_small = create_mobilenetv3_small(num_classes=2)
     
-    x = torch.randn(1, 3, 224, 224)
+    x = torch.randn(1, 3, 70, 70)
     
     print("MobileNet V3 Large:")
     print(f"参数量: {sum(p.numel() for p in model_large.parameters()) / 1e6:.1f}M")

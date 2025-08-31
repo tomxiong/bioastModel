@@ -190,7 +190,7 @@ if __name__ == "__main__":
     model_0_5 = create_shufflenetv2_x0_5(num_classes=2)
     model_1_0 = create_shufflenetv2_x1_0(num_classes=2)
     
-    x = torch.randn(1, 3, 224, 224)
+    x = torch.randn(1, 3, 70, 70)
     
     print("ShuffleNet V2 0.5x:")
     print(f"参数量: {sum(p.numel() for p in model_0_5.parameters()) / 1e6:.1f}M")

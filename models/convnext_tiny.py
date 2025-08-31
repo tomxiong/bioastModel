@@ -303,7 +303,7 @@ if __name__ == "__main__":
     
     # Test with different input sizes to verify adaptability
     print("\n🔧 Testing different input sizes...")
-    test_sizes = [(1, 3, 64, 64), (1, 3, 224, 224)]
+    test_sizes = [(1, 3, 64, 64), (1, 3, 70, 70)]
     
     for size in test_sizes:
         try:

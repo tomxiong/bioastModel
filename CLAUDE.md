@@ -19,10 +19,15 @@ The project has implemented and trained **15+ different model architectures** wi
 - `training/dataset.py` - PyTorch Dataset implementation with transforms
 - `bioast_dataset/` - Main dataset directory (train/test/negative/positive structure)
 
-**Model Definitions**: All models in `models/` directory with consistent APIs:
-- `models/airbubble_hybrid_net.py` - Top performer (98.02% accuracy)
-- `models/resnet_improved.py`, `models/efficientnet.py`, etc.
-- Each model provides `create_<model_name>(num_classes=2)` factory function
+**Model Definitions**: 
+- **Core Models**: All models in `models/` directory with consistent APIs:
+  - `models/airbubble_hybrid_net.py` - Top performer (98.02% accuracy)
+  - `models/resnet_improved.py`, `models/efficientnet.py`, etc.
+  - Each model provides `create_<model_name>(num_classes=2)` factory function
+- **MobileNetV5 Module**: Standalone implementation in `mobilenetv5/` directory:
+  - `mobilenetv5/models/mobilenetv5_model.py` - MobileNetV5 with SE attention
+  - `mobilenetv5/models/mobilenetv5_small.py` - Lightweight variant (1.6M parameters)
+  - Independent training pipeline without modifying existing code
 
 **Training Framework**:
 - `core/training_utils.py` - Common training utilities
@@ -45,7 +50,42 @@ The project has implemented and trained **15+ different model architectures** wi
 - `TRAINING_CONFIGS` with optimized settings per model type
 - `get_model_specific_config(model_name)` returns recommended training config
 
-## Common Development Tasks
+## Development Environment Setup
+
+**IMPORTANT**: This project uses a local virtual environment (`.venv`) and uv for package management.
+
+**Environment Rules**:
+- **Always use the local .venv environment**: All Python commands should be run within the `.venv` virtual environment
+- **Package Installation**: Use `uv pip install <package>` instead of `pip install` for all new package installations
+- **Environment Activation**: Ensure `.venv` is activated before running any Python scripts
+- **Encoding Fix**: Set console encoding to UTF-8 to avoid Chinese text display issues
+- **Code Standards**: All Python scripts should use English for console output to avoid encoding issues
+
+**Package Management Commands**:
+```bash
+# Install new packages (REQUIRED method)
+uv pip install <package_name>
+
+# Install from requirements
+uv pip install -r requirements.txt
+
+# List installed packages
+uv pip list
+
+# Upgrade packages
+uv pip install --upgrade <package_name>
+```
+
+**Console Encoding Setup** (Windows):
+```bash
+# Set UTF-8 encoding before running Python scripts
+chcp 65001
+
+# Or run Python with UTF-8 encoding
+$env:PYTHONIOENCODING="utf-8"; .venv/Scripts/python your_script.py
+```
+
+## Common Development Commands
 
 ### Training Models
 
@@ -67,21 +107,33 @@ The project has implemented and trained **15+ different model architectures** wi
 .venv\Scripts\python train_all_models.py
 ```
 
-### Model Evaluation and Testing
+### Model Testing and Validation
 
-**Batch Testing**:
+**Model Testing**:
 ```bash
-# Test all trained models
+# Batch test all trained models
 .venv\Scripts\python scripts/batch_test_models.py
 
 # Validate ONNX models
 .venv\Scripts\python scripts/batch_validate_all_onnx_models.py
+
+# Quick validation of ONNX models
+.venv\Scripts\python scripts/quick_validate_all_onnx.py
+
+# Check training progress
+.venv\Scripts\python scripts/check_test_progress.py
 ```
 
-**Individual Model Analysis**:
+**Model Analysis**:
 ```bash
-# Generate comprehensive analysis
+# Analyze individual model performance
+.venv\Scripts\python scripts/analyze_individual_models.py
+
+# Generate comprehensive model analysis
 .venv\Scripts\python scripts/comprehensive_model_analysis.py
+
+# Simple model analyzer
+.venv\Scripts\python scripts/simple_model_analyzer.py
 
 # Compare model performance
 .venv\Scripts\python scripts/compare_models.py
@@ -117,6 +169,92 @@ The project has implemented and trained **15+ different model architectures** wi
 .venv\Scripts\python scripts/generate_final_analysis.py
 ```
 
+### Dataset Management
+
+**Dataset Operations**:
+```bash
+# Check dataset status
+.venv\Scripts\python dataset_manager.py --check
+
+# Update dataset
+.venv\Scripts\python dataset_manager.py --update-dataset "path/to/new/dataset"
+
+# Retrain all models
+.venv\Scripts\python dataset_manager.py --retrain-all
+```
+
+### MobileNetV5 Training (Standalone Module)
+
+**Environment Setup**:
+```bash
+# Activate virtual environment (required)
+.venv\Scripts\activate
+
+# Check environment
+cd mobilenetv5
+python check_env.py
+```
+
+**Training Commands**:
+```bash
+# Quick test (5 epochs)
+cd mobilenetv5
+python train.py --model mobilenetv5 --config quick_test --test_only
+
+# Standard training (50 epochs)
+cd mobilenetv5
+python train.py --model mobilenetv5 --config standard
+
+# Train small variant
+cd mobilenetv5
+python train.py --model mobilenetv5_small --config standard
+
+# Extended training (100 epochs)
+cd mobilenetv5
+python train.py --model mobilenetv5 --config extended
+
+# Custom parameters
+cd mobilenetv5
+python train.py --model mobilenetv5 --config standard --batch_size 16 --learning_rate 0.0005 --num_epochs 75
+```
+
+**Evaluation**:
+```bash
+# Evaluate trained model
+cd mobilenetv5
+python evaluation.py --model mobilenetv5 --checkpoint experiments/mobilenetv5/model_best.pth
+```
+
+## Build and Code Quality
+
+**Dependencies**: Main dependencies include:
+- PyTorch + torchvision
+- scikit-learn
+- matplotlib, seaborn
+- PIL/Pillow
+- ONNX, onnxruntime
+- uv (package manager)
+- Complete dependency list in `requirements.txt`
+
+**Code Quality**: This project currently doesn't have formal linting/type checking configured. Consider adding:
+```bash
+# Install development dependencies (optional)
+uv pip install black flake8 mypy pytest
+
+# Format code (if black is installed)
+black .
+
+# Lint code (if flake8 is installed)
+flake8 .
+
+# Type check (if mypy is installed)
+mypy .
+```
+
+**GPU Support**: All training scripts detect and use CUDA when available.
+
+**Python Path**: Scripts add project root to sys.path for imports.
+
 ## Model Performance Hierarchy
 
 Current best performers (from README.md):
@@ -125,6 +263,11 @@ Current best performers (from README.md):
 3. **EfficientNet-B0**: 97.54% (Efficient CNN)
 4. **MIC_MobileNetV3**: 97.45% (Mobile-optimized)
 5. **Micro-ViT**: 97.36% (Micro Vision Transformer)
+
+**New Model**: MobileNetV5 module (standalone implementation):
+- **MobileNetV5**: 2.8M parameters with SE attention
+- **MobileNetV5 Small**: 1.6M parameters for faster inference
+- Optimized for 70×70 input images with modern architecture
 
 All models target 70×70 input images with 2 classes (positive/negative).
 
@@ -155,6 +298,7 @@ def create_<model_name>(num_classes=2, **kwargs):
 - **Checkpoints**: Model-specific subdirectories with `best.pth`, `latest.pth`
 - **Reports**: `reports/` with comprehensive analysis files
 - **Scripts**: `scripts/` for all automation and training scripts
+- **MobileNetV5**: `mobilenetv5/` standalone module with independent implementation
 
 ## Dataset Structure
 
@@ -174,54 +318,6 @@ bioast_dataset/
 
 Data loading automatically handles this structure via `BioastDataset` class.
 
-## Development Environment
-
-### Python Environment Setup
-**IMPORTANT**: This project uses a local virtual environment (`.venv`) and uv for package management.
-
-**Environment Rules**:
-- **Always use the local .venv environment**: All Python commands should be run within the `.venv` virtual environment
-- **Package Installation**: Use `uv pip install <package>` instead of `pip install` for all new package installations
-- **Environment Activation**: Ensure `.venv` is activated before running any Python scripts
-- **Encoding Fix**: Set console encoding to UTF-8 to avoid Chinese text display issues
-- **Code Standards**: All Python scripts should use English for console output to avoid encoding issues
-
-**Package Management Commands**:
-```bash
-# Install new packages (REQUIRED method)
-uv pip install <package_name>
-
-# Install from requirements
-uv pip install -r requirements.txt
-
-# List installed packages
-uv pip list
-
-# Upgrade packages
-uv pip install --upgrade <package_name>
-```
-
-**Console Encoding Setup** (Windows):
-```bash
-# Set UTF-8 encoding before running Python scripts
-chcp 65001
-
-# Or run Python with UTF-8 encoding
-$env:PYTHONIOENCODING="utf-8"; .venv/Scripts/python your_script.py
-```
-
-**Dependencies**: Main dependencies include:
-- PyTorch + torchvision
-- scikit-learn
-- matplotlib, seaborn
-- PIL/Pillow
-- ONNX, onnxruntime
-- uv (package manager)
-
-**GPU Support**: All training scripts detect and use CUDA when available.
-
-**Python Path**: Scripts add project root to sys.path for imports.
-
 ## Important Notes
 
 - Models use 70×70 input resolution (not standard 224×224)
@@ -230,3 +326,5 @@ $env:PYTHONIOENCODING="utf-8"; .venv/Scripts/python your_script.py
 - ONNX models are committed for deployment
 - Chinese comments throughout - this is a bilingual codebase
 - Comprehensive performance tracking and comparison built-in
+- Use uv for package management instead of pip
+- Set console encoding to UTF-8 on Windows to avoid display issues

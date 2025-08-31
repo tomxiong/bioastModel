@@ -89,9 +89,9 @@ class SimpleModelAnalyzer:
         
         try:
             # 定义变换
-            if self.input_shape[1:] == (224, 224):  # EfficientNet
+            if self.input_shape[1:] == (70, 70):  # EfficientNet
                 transform = transforms.Compose([
-                    transforms.Resize((224, 224)),
+                    transforms.Resize((70, 70)),
                     transforms.ToTensor(),
                 ])
             else:  # Others use 70x70

@@ -15,7 +15,7 @@ from typing import Optional, Tuple
 class PatchEmbedding(nn.Module):
     """Convert image patches to embeddings."""
     
-    def __init__(self, img_size: int = 224, patch_size: int = 16, in_channels: int = 3, embed_dim: int = 192):
+    def __init__(self, img_size: int = 70, patch_size: int = 16, in_channels: int = 3, embed_dim: int = 192):
         super().__init__()
         self.img_size = img_size
         self.patch_size = patch_size
@@ -278,7 +278,7 @@ if __name__ == "__main__":
     
     # Test forward pass
     batch_size = 2
-    test_input = torch.randn(batch_size, 3, 224, 224)
+    test_input = torch.randn(batch_size, 3, 70, 70)
     
     with torch.no_grad():
         output = model(test_input)

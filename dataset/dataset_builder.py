@@ -15,7 +15,7 @@ from collections import defaultdict, Counter
 from datetime import datetime
 
 class BioDatasetBuilder:
-    def __init__(self, source_dir="D:\\image_analysis", output_dir="bioast_dataset"):
+    def __init__(self, source_dir="D:\\bioast_images", output_dir="bioast_dataset"):
         self.source_dir = Path(source_dir)
         self.output_dir = Path(output_dir)
         self.stats = defaultdict(int)
@@ -37,12 +37,12 @@ class BioDatasetBuilder:
             labels_str = parts[1]
             
             # 解析标签字符串，+表示阳性，-表示阴性
-            # 根据用户描述：hole_24对应cfg中索引24（第25个位置）
+            # 根据用户描述：药敏判别从hole_25开始到hole_96
             labels = []
             for i, char in enumerate(labels_str):
-                hole_num = i  # cfg索引i直接对应hole_{i}.png
-                # 只处理存在的图片文件（hole_24到hole_119）
-                if 24 <= hole_num <= 119:
+                hole_num = i + 1  # cfg索引i对应hole_{i+1}.png
+                # 只处理药敏判别相关的图片文件（hole_25到hole_120）
+                if 25 <= hole_num <= 120:
                     if char == '+':
                         labels.append((hole_num, 'positive'))
                     elif char == '-':
@@ -91,25 +91,28 @@ class BioDatasetBuilder:
         for sample in self.samples_data:
             sample_dir = sample['sample_dir']
             
+            # 处理每个孔位的图像（从hole_25到hole_120，用于药敏判别）
             for hole_num, label in sample['labels']:
-                hole_file = sample_dir / f"hole_{hole_num}.png"
-                
-                if hole_file.exists():
-                    image_info = {
-                        'path': str(hole_file),
-                        'sample': sample['sample_name'],
-                        'hole': hole_num,
-                        'label': label
-                    }
+                # 确保只处理hole_25到hole_120的图像
+                if 25 <= hole_num <= 120:
+                    hole_file = sample_dir / f"hole_{hole_num}.png"
                     
-                    if label == 'positive':
-                        positive_images.append(image_info)
+                    if hole_file.exists():
+                        image_info = {
+                            'path': str(hole_file),
+                            'sample': sample['sample_name'],
+                            'hole': hole_num,
+                            'label': label
+                        }
+                        
+                        if label == 'positive':
+                            positive_images.append(image_info)
+                        else:
+                            negative_images.append(image_info)
+                        
+                        self.stats[f'{label}_total'] += 1
                     else:
-                        negative_images.append(image_info)
-                    
-                    self.stats[f'{label}_total'] += 1
-                else:
-                    print(f"警告: 未找到图片文件: {hole_file}")
+                        print(f"警告: 未找到图片文件: {hole_file}")
         
         print(f"阳性样本: {len(positive_images)}")
         print(f"阴性样本: {len(negative_images)}")

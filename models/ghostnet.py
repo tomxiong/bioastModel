@@ -209,7 +209,7 @@ if __name__ == "__main__":
     # 测试模型
     model = create_ghostnet(num_classes=2)
     
-    x = torch.randn(1, 3, 224, 224)
+    x = torch.randn(1, 3, 70, 70)
     
     print("GhostNet:")
     print(f"参数量: {sum(p.numel() for p in model.parameters()) / 1e6:.1f}M")

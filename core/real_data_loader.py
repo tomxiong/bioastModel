@@ -81,7 +81,7 @@ class RealDataLoader:
         if len(images) == 0:
             self.logger.warning(f"No images found for {split} split")
             # 返回空数组但保持正确的形状
-            return np.empty((0, *self.image_size, 3), dtype=np.float32), np.empty((0,), dtype=np.int64)
+            return np.empty((0, self.image_size[0], self.image_size[1], 3), dtype=np.float32), np.empty((0,), dtype=np.int64)
         
         images = np.array(images)
         labels = np.array(labels)
@@ -97,10 +97,11 @@ class RealDataLoader:
         try:
             image = cv2.imread(img_path)
             if image is None:
+                self.logger.warning(f"Failed to read image {img_path}")
                 return None
             
             # 调整大小到指定尺寸
-            image = cv2.resize(image, self.image_size)
+            image = cv2.resize(image, (self.image_size[0], self.image_size[1]))
             # 转换BGR到RGB
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             # 归一化到[0,1]

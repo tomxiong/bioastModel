@@ -102,17 +102,17 @@ def get_model_input_shape(model_name):
     """获取模型输入形状"""
     input_shapes = {
         'simplified_airbubble_detector': (3, 70, 70),
-        'efficientnet_b0': (3, 224, 224),
-        'resnet18_improved': (3, 224, 224),
-        'convnext_tiny': (3, 224, 224),
-        'coatnet': (3, 224, 224),
-        'vit_tiny': (3, 224, 224),
-        'mic_mobilenetv3': (3, 224, 224),
-        'micro_vit': (3, 224, 224),
-        'airbubble_hybrid_net': (3, 224, 224)
+        'efficientnet_b0': (3, 70, 70),
+        'resnet18_improved': (3, 70, 70),
+        'convnext_tiny': (3, 70, 70),
+        'coatnet': (3, 70, 70),
+        'vit_tiny': (3, 70, 70),
+        'mic_mobilenetv3': (3, 70, 70),
+        'micro_vit': (3, 70, 70),
+        'airbubble_hybrid_net': (3, 70, 70)
     }
     
-    return input_shapes.get(model_name, (3, 224, 224))
+    return input_shapes.get(model_name, (3, 70, 70))
 
 def convert_to_onnx(model_name, opset_version=11):
     """将模型转换为ONNX格式"""

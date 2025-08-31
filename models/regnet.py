@@ -211,7 +211,7 @@ if __name__ == "__main__":
     model_x400 = create_regnet_x_400mf(num_classes=2)
     model_y400 = create_regnet_y_400mf(num_classes=2)
     
-    x = torch.randn(1, 3, 224, 224)
+    x = torch.randn(1, 3, 70, 70)
     
     print("RegNet X-400MF:")
     print(f"参数量: {sum(p.numel() for p in model_x400.parameters()) / 1e6:.1f}M")

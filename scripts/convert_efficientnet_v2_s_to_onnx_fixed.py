@@ -14,7 +14,7 @@ from pathlib import Path
 # 添加项目根目录到系统路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from models.efficientnet_v2_wrapper import EfficientNetV2S
+from models.efficientnet_v2 import create_efficientnetv2_s
 
 def convert_efficientnet_v2_s_to_onnx_fixed():
     """修复版EfficientNet V2-S ONNX转换"""
@@ -25,11 +25,11 @@ def convert_efficientnet_v2_s_to_onnx_fixed():
     device = torch.device('cpu')
     
     # 创建模型
-    model = EfficientNetV2S(num_classes=2)
+    model = create_efficientnetv2_s(num_classes=2)
     model = model.to(device)
     
     # 加载训练好的权重
-    checkpoint_path = "experiments/experiment_20250804_123239/efficientnet_v2_s/best_model.pth"
+    checkpoint_path = "checkpoints/efficientnetv2_s/best.pth"
     checkpoint = torch.load(checkpoint_path, map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
     

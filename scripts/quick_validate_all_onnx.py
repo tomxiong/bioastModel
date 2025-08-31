@@ -56,7 +56,7 @@ def check_onnx_model_basic(model_name):
             if input_shape[2] == 70 or input_shape[3] == 70:
                 test_input = np.random.randn(1, 3, 70, 70).astype(np.float32)
             elif input_shape[2] == 224 or input_shape[3] == 224:
-                test_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
+                test_input = np.random.randn(1, 3, 70, 70).astype(np.float32)
             else:
                 # 使用模型定义的实际输入尺寸
                 test_input = np.random.randn(1, 3, input_shape[2], input_shape[3]).astype(np.float32)

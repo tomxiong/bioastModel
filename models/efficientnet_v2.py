@@ -298,16 +298,17 @@ def create_efficientnetv2_m(num_classes: int = 1000, **kwargs) -> EfficientNetV2
     )
 
 if __name__ == "__main__":
-    # 测试模型
+    # 测试模型 - 使用70x70输入尺寸
     model_s = create_efficientnetv2_s(num_classes=2)
     model_m = create_efficientnetv2_m(num_classes=2)
     
-    x = torch.randn(1, 3, 224, 224)
+    # 修改为70x70输入尺寸以匹配数据集
+    x = torch.randn(1, 3, 70, 70)
     
-    print("EfficientNet V2-S:")
+    print("EfficientNet V2-S (70x70输入):")
     print(f"参数量: {sum(p.numel() for p in model_s.parameters()) / 1e6:.1f}M")
     print(f"输出形状: {model_s(x).shape}")
     
-    print("\nEfficientNet V2-M:")
+    print("\nEfficientNet V2-M (70x70输入):")
     print(f"参数量: {sum(p.numel() for p in model_m.parameters()) / 1e6:.1f}M")
     print(f"输出形状: {model_m(x).shape}")

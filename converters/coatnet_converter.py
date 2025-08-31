@@ -20,7 +20,7 @@ class CoAtNetConverter(ONNXConverterBase):
     def __init__(self):
         """初始化转换器"""
         super().__init__("coatnet")
-        self.input_shape = (3, 224, 224)  # 模型特定的输入形状
+        self.input_shape = (3, 70, 70)  # 模型特定的输入形状
     
     def convert(self):
         """转换模型为ONNX格式
