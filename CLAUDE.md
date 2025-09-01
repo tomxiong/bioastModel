@@ -8,7 +8,7 @@ This is a biomedical image analysis project focused on **70×70 pixel colony det
 - **Positive**: Colony present in image
 - **Negative**: No colony or only air bubbles present
 
-The project has implemented and trained **15+ different model architectures** with comprehensive performance analysis, ONNX conversion capabilities, and extensive evaluation frameworks.
+The project has implemented and trained **30+ different model architectures** with comprehensive performance analysis, ONNX conversion capabilities, and extensive evaluation frameworks. The codebase includes a modular architecture with organized file structure and automated training pipelines.
 
 ## Architecture and Structure
 
@@ -225,30 +225,43 @@ cd mobilenetv5
 python evaluation.py --model mobilenetv5 --checkpoint experiments/mobilenetv5/model_best.pth
 ```
 
-## Build and Code Quality
+## Build and Development Commands
 
-**Dependencies**: Main dependencies include:
-- PyTorch + torchvision
-- scikit-learn
-- matplotlib, seaborn
-- PIL/Pillow
-- ONNX, onnxruntime
-- uv (package manager)
-- Complete dependency list in `requirements.txt`
-
-**Code Quality**: This project currently doesn't have formal linting/type checking configured. Consider adding:
+**Environment Setup**:
 ```bash
-# Install development dependencies (optional)
+# Install dependencies
+uv pip install -r requirements.txt
+
+# Verify environment
+.venv/bin/python -c "import torch; print(f'PyTorch: {torch.__version__}')"
+.venv/bin/python -c "import cv2; print(f'OpenCV: {cv2.__version__}')"
+```
+
+**Code Quality Tools** (optional - not currently configured):
+```bash
+# Install development tools
 uv pip install black flake8 mypy pytest
 
-# Format code (if black is installed)
+# Format code
 black .
 
-# Lint code (if flake8 is installed)
+# Lint code  
 flake8 .
 
-# Type check (if mypy is installed)
+# Type checking
 mypy .
+
+# Run tests (if test suite exists)
+pytest
+```
+
+**File Organization**:
+```bash
+# Organize files by functionality (if needed)
+.venv/bin/python organize_files.py
+
+# View organization report
+cat FILE_ORGANIZATION_REPORT.md
 ```
 
 **GPU Support**: All training scripts detect and use CUDA when available.
@@ -299,6 +312,19 @@ def create_<model_name>(num_classes=2, **kwargs):
 - **Reports**: `reports/` with comprehensive analysis files
 - **Scripts**: `scripts/` for all automation and training scripts
 - **MobileNetV5**: `mobilenetv5/` standalone module with independent implementation
+- **Organized Structure**: Files are categorized into functional directories:
+  - `config/` - Configuration files and JSON results
+  - `documentation/` - Reports, HTML analysis, and documentation
+  - `analysis/` - Analysis and error investigation tools
+  - `converters/` - ONNX model conversion utilities
+  - `cleanup/` - Maintenance and cleanup scripts
+
+### Architecture Patterns
+- **Factory Pattern**: All models use `create_<model_name>(num_classes=2)` factory functions
+- **Configuration-Driven**: Training parameters and model metadata centralized in config files
+- **Modular Training**: Separate trainer, evaluator, and visualizer components
+- **Pipeline Architecture**: Data loading → Training → Evaluation → Conversion → Deployment
+- **Registry Pattern**: Model registry tracks trained models and performance metrics
 
 ## Dataset Structure
 
@@ -328,3 +354,6 @@ Data loading automatically handles this structure via `BioastDataset` class.
 - Comprehensive performance tracking and comparison built-in
 - Use uv for package management instead of pip
 - Set console encoding to UTF-8 on Windows to avoid display issues
+- The project has been organized with functional directories for better maintainability
+- No formal test suite is currently configured - testing is done through validation scripts
+- Core entry files remain in the root directory for easy access
