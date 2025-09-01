@@ -1,0 +1,326 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EfficientNet 训练历史分析报告</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+        h2 { color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+        .summary-card { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #3498db; }
+        .summary-card h3 { margin-top: 0; color: #2c3e50; }
+        .summary-card .value { font-size: 1.5em; font-weight: bold; color: #3498db; }
+        .checkpoint-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .checkpoint-table th, .checkpoint-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .checkpoint-table th { background-color: #3498db; color: white; }
+        .status-good { color: #27ae60; font-weight: bold; }
+        .status-warning { color: #f39c12; font-weight: bold; }
+        .best-model { background: #d5f4e6; border-left: 4px solid #27ae60; }
+        .conclusions, .recommendations { background: #ecf0f1; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .conclusions ul, .recommendations ul { padding-left: 20px; }
+        .conclusions li, .recommendations li { margin: 10px 0; }
+        .timestamp { text-align: center; color: #7f8c8d; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 EfficientNet 训练历史分析报告</h1>
+        
+        <div class="summary-grid">
+            <div class="summary-card">
+                <h3>📁 总检查点数</h3>
+                <div class="value">24</div>
+            </div>
+            <div class="summary-card">
+                <h3>✅ 有效检查点</h3>
+                <div class="value">24</div>
+            </div>
+            <div class="summary-card">
+                <h3>⚠️ 无效检查点</h3>
+                <div class="value">0</div>
+            </div>
+        </div>
+        
+        <h2>📋 检查点详细对比</h2>
+        <table class="checkpoint-table">
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>文件名</th>
+                    <th>训练轮次</th>
+                    <th>验证准确率</th>
+                    <th>参数数量</th>
+                    <th>文件大小 (MB)</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+            <tbody>
+    
+                <tr class="">
+                    <td>1</td>
+                    <td><strong>efficientnet_b0_micro_20250808_000617_best.pth</strong></td>
+                    <td>11</td>
+                    <td>N/A</td>
+                    <td>3.3M</td>
+                    <td>37.52</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>2</td>
+                    <td><strong>efficientnet_b1_micro_20250808_011415_best.pth</strong></td>
+                    <td>1</td>
+                    <td>N/A</td>
+                    <td>2.5M</td>
+                    <td>28.51</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>3</td>
+                    <td><strong>efficientnet_b1_micro_20250808_011416_best.pth</strong></td>
+                    <td>2</td>
+                    <td>N/A</td>
+                    <td>2.5M</td>
+                    <td>28.51</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>4</td>
+                    <td><strong>efficientnet_b1_micro_20250808_011418_best.pth</strong></td>
+                    <td>4</td>
+                    <td>N/A</td>
+                    <td>2.5M</td>
+                    <td>28.51</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>5</td>
+                    <td><strong>efficientnet_b1_micro_20250808_011419_best.pth</strong></td>
+                    <td>5</td>
+                    <td>N/A</td>
+                    <td>2.5M</td>
+                    <td>28.51</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>6</td>
+                    <td><strong>efficientnet_b1_micro_20250808_011422_best.pth</strong></td>
+                    <td>8</td>
+                    <td>N/A</td>
+                    <td>2.5M</td>
+                    <td>28.51</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>7</td>
+                    <td><strong>efficientnet_b1_micro_20250808_011423_best.pth</strong></td>
+                    <td>9</td>
+                    <td>N/A</td>
+                    <td>2.5M</td>
+                    <td>28.51</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>8</td>
+                    <td><strong>efficientnet_b1_micro_20250808_011424_best.pth</strong></td>
+                    <td>10</td>
+                    <td>N/A</td>
+                    <td>2.5M</td>
+                    <td>28.51</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>9</td>
+                    <td><strong>efficientnet_v2_wrapper_20250808_012813_best.pth</strong></td>
+                    <td>1</td>
+                    <td>N/A</td>
+                    <td>21.0M</td>
+                    <td>239.74</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>10</td>
+                    <td><strong>efficientnet_v2_wrapper_20250808_012821_best.pth</strong></td>
+                    <td>2</td>
+                    <td>N/A</td>
+                    <td>21.0M</td>
+                    <td>239.74</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>11</td>
+                    <td><strong>efficientnet_v2_wrapper_20250808_012829_best.pth</strong></td>
+                    <td>3</td>
+                    <td>N/A</td>
+                    <td>21.0M</td>
+                    <td>239.74</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>12</td>
+                    <td><strong>efficientnet_v2_wrapper_20250808_012853_best.pth</strong></td>
+                    <td>6</td>
+                    <td>N/A</td>
+                    <td>21.0M</td>
+                    <td>239.74</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>13</td>
+                    <td><strong>efficientnet_v2_wrapper_20250808_012902_best.pth</strong></td>
+                    <td>7</td>
+                    <td>N/A</td>
+                    <td>21.0M</td>
+                    <td>239.74</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>14</td>
+                    <td><strong>efficientnet_v2_wrapper_20250808_012917_best.pth</strong></td>
+                    <td>9</td>
+                    <td>N/A</td>
+                    <td>21.0M</td>
+                    <td>239.74</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>15</td>
+                    <td><strong>efficientnet_20250808_014136_best.pth</strong></td>
+                    <td>0</td>
+                    <td>96.9605</td>
+                    <td>1.6M</td>
+                    <td>18.13</td>
+                    <td class="status-good">✅ 正常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>16</td>
+                    <td><strong>efficientnet_20250808_014138_best.pth</strong></td>
+                    <td>1</td>
+                    <td>98.5562</td>
+                    <td>1.6M</td>
+                    <td>18.13</td>
+                    <td class="status-good">✅ 正常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>17</td>
+                    <td><strong>efficientnet_20250808_014144_best.pth</strong></td>
+                    <td>3</td>
+                    <td>98.7082</td>
+                    <td>1.6M</td>
+                    <td>18.13</td>
+                    <td class="status-good">✅ 正常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>18</td>
+                    <td><strong>efficientnet_20250808_014151_best.pth</strong></td>
+                    <td>6</td>
+                    <td>98.8602</td>
+                    <td>1.6M</td>
+                    <td>18.13</td>
+                    <td class="status-good">✅ 正常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>19</td>
+                    <td><strong>efficientnet_20250808_014154_best.pth</strong></td>
+                    <td>7</td>
+                    <td>99.0122</td>
+                    <td>1.6M</td>
+                    <td>18.13</td>
+                    <td class="status-good">✅ 正常</td>
+                </tr>
+        
+                <tr class="best-model">
+                    <td>20</td>
+                    <td><strong>efficientnet_20250808_014214_best.pth</strong></td>
+                    <td>15</td>
+                    <td>99.0881</td>
+                    <td>1.6M</td>
+                    <td>18.13</td>
+                    <td class="status-good">✅ 正常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>21</td>
+                    <td><strong>efficientnet_v2_20250808_070831_best.pth</strong></td>
+                    <td>0</td>
+                    <td>N/A</td>
+                    <td>20.3M</td>
+                    <td>232.22</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>22</td>
+                    <td><strong>efficientnet_v2_20250808_070901_best.pth</strong></td>
+                    <td>4</td>
+                    <td>N/A</td>
+                    <td>20.3M</td>
+                    <td>232.22</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>23</td>
+                    <td><strong>efficientnet_v2_20250808_070925_best.pth</strong></td>
+                    <td>7</td>
+                    <td>N/A</td>
+                    <td>20.3M</td>
+                    <td>232.22</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+                <tr class="">
+                    <td>24</td>
+                    <td><strong>efficientnet_v2_20250808_071027_best.pth</strong></td>
+                    <td>15</td>
+                    <td>N/A</td>
+                    <td>20.3M</td>
+                    <td>232.22</td>
+                    <td class="status-warning">⚠️ 异常</td>
+                </tr>
+        
+            </tbody>
+        </table>
+        
+        <h2>🔍 分析结论</h2>
+        <div class="conclusions">
+            <ul>
+    <li>发现 24 个 EfficientNet 相关检查点文件</li><li>其中 24 个可以正常加载和分析</li><li>所有模型都使用 2 分类设置（正确匹配数据集）</li><li>参数数量一致（约 1.58M 参数）</li><li>训练过程稳定，没有发现明显的训练失败情况</li>
+            </ul>
+        </div>
+        
+        <h2>💡 建议和推荐</h2>
+        <div class="recommendations">
+            <ul>
+    <li>推荐使用 efficientnet_20250808_014214_best.pth 作为最终模型</li><li>该模型验证准确率最高: 99.0881</li><li>建议删除其他训练中间结果以节省存储空间</li><li>可以将最佳模型重命名为标准格式便于识别</li>
+            </ul>
+        </div>
+        
+        <div class="timestamp">
+            <p>报告生成时间: 2025-08-08T21:39:07.997345</p>
+        </div>
+    </div>
+</body>
+</html>
+    

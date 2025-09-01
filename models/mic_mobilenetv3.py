@@ -1,470 +1,325 @@
 """
-MIC-specific MobileNetV3 with SE attention for colony detection.
-
-This model is specifically designed for MIC testing scenarios with:
-- 70x70 small image optimization
-- Air bubble detection and suppression
-- Turbidity analysis capabilities
-- Optical interference handling
-
-Based on ideas.md specifications for MIC testing.
+MIC MobileNetV3 - Mobile-optimized CNN with medical features
+Optimized for 70x70 biomedical image analysis
+Parameters: ~2.5M
 """
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Dict, Any, List
-import math
+from typing import Optional
 
-class SEModule(nn.Module):
-    """Squeeze-and-Excitation module optimized for small images."""
-    
-    def __init__(self, in_channels: int, reduction: int = 4):
-        super().__init__()
-        self.global_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc1 = nn.Conv2d(in_channels, in_channels // reduction, 1)
-        self.fc2 = nn.Conv2d(in_channels // reduction, in_channels, 1)
-        self.activation = nn.ReLU(inplace=True)
-        self.sigmoid = nn.Sigmoid()
+class SEBlock(nn.Module):
+    """Squeeze-and-Excitation block"""
+    def __init__(self, channels: int, reduction: int = 4):
+        super(SEBlock, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Sequential(
+            nn.Linear(channels, channels // reduction, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(channels // reduction, channels, bias=False),
+            nn.Sigmoid()
+        )
     
     def forward(self, x):
-        scale = self.global_pool(x)
-        scale = self.fc1(scale)
-        scale = self.activation(scale)
-        scale = self.fc2(scale)
-        scale = self.sigmoid(scale)
-        return x * scale
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x).view(b, c)
+        y = self.fc(y).view(b, c, 1, 1)
+        return x * y.expand_as(x)
 
-class InvertedResidual(nn.Module):
-    """Inverted Residual block with SE attention."""
-    
-    def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        kernel_size: int = 3,
-        stride: int = 1,
-        expand_ratio: int = 6,
-        use_se: bool = True,
-        activation: str = 'relu'
-    ):
-        super().__init__()
+class HardSwish(nn.Module):
+    """Hard Swish activation function"""
+    def forward(self, x):
+        return x * F.relu6(x + 3.0) / 6.0
+
+class MobileNetV3Block(nn.Module):
+    """MobileNetV3 building block with medical imaging optimizations"""
+    def __init__(self, in_channels, out_channels, kernel_size, stride, 
+                 expand_ratio, use_se=False, use_hs=False):
+        super(MobileNetV3Block, self).__init__()
+        
         self.stride = stride
         self.use_residual = stride == 1 and in_channels == out_channels
         
-        hidden_dim = in_channels * expand_ratio
-        
-        layers = []
-        
-        # Expand
+        # Expansion phase
+        hidden_dim = int(in_channels * expand_ratio)
         if expand_ratio != 1:
-            layers.extend([
+            self.expand_conv = nn.Sequential(
                 nn.Conv2d(in_channels, hidden_dim, 1, bias=False),
                 nn.BatchNorm2d(hidden_dim),
-                nn.ReLU6(inplace=True) if activation == 'relu' else nn.Hardswish(inplace=True)
-            ])
+                HardSwish() if use_hs else nn.ReLU(inplace=True)
+            )
+        else:
+            self.expand_conv = nn.Identity()
         
-        # Depthwise
-        layers.extend([
+        # Depthwise convolution
+        self.depthwise_conv = nn.Sequential(
             nn.Conv2d(hidden_dim, hidden_dim, kernel_size, stride, 
                      kernel_size//2, groups=hidden_dim, bias=False),
             nn.BatchNorm2d(hidden_dim),
-            nn.ReLU6(inplace=True) if activation == 'relu' else nn.Hardswish(inplace=True)
-        ])
+            HardSwish() if use_hs else nn.ReLU(inplace=True)
+        )
         
-        # SE
+        # Squeeze-and-Excitation
         if use_se:
-            layers.append(SEModule(hidden_dim))
+            self.se = SEBlock(hidden_dim)
+        else:
+            self.se = nn.Identity()
         
-        # Project
-        layers.extend([
+        # Pointwise convolution
+        self.pointwise_conv = nn.Sequential(
             nn.Conv2d(hidden_dim, out_channels, 1, bias=False),
             nn.BatchNorm2d(out_channels)
-        ])
-        
-        self.conv = nn.Sequential(*layers)
+        )
     
     def forward(self, x):
+        identity = x
+        
+        # Expansion
+        out = self.expand_conv(x)
+        
+        # Depthwise
+        out = self.depthwise_conv(out)
+        
+        # SE block
+        out = self.se(out)
+        
+        # Pointwise
+        out = self.pointwise_conv(out)
+        
+        # Residual connection
         if self.use_residual:
-            return x + self.conv(x)
-        else:
-            return self.conv(x)
+            out = out + identity
+            
+        return out
 
-class AirBubbleDetectionModule(nn.Module):
-    """Specialized air bubble detection module for MIC testing."""
-    
-    def __init__(self, in_channels: int = 96):
-        super().__init__()
+class MedicalFeatureExtractor(nn.Module):
+    """Medical-specific feature extraction module"""
+    def __init__(self, in_channels, out_channels):
+        super(MedicalFeatureExtractor, self).__init__()
         
-        # Ring structure detector
-        self.ring_detector = nn.Sequential(
-            nn.Conv2d(in_channels, 32, 5, padding=2),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(32, 16, 3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(16, 1, 1),
-            nn.Sigmoid()
+        # Multi-scale feature extraction for medical patterns
+        self.scale1 = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels//4, 1, padding=0),
+            nn.BatchNorm2d(out_channels//4),
+            nn.ReLU(inplace=True)
         )
         
-        # Center darkness detector
-        self.center_detector = nn.Sequential(
-            nn.Conv2d(in_channels, 16, 3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(16, 1, 1),
-            nn.Sigmoid()
+        self.scale2 = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels//4, 3, padding=1),
+            nn.BatchNorm2d(out_channels//4),
+            nn.ReLU(inplace=True)
         )
         
-        # Edge irregularity detector
-        self.edge_detector = nn.Sequential(
-            nn.Conv2d(in_channels, 16, 3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(16, 8, 3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(8, 1, 1),
-            nn.Sigmoid()
+        self.scale3 = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels//4, 5, padding=2),
+            nn.BatchNorm2d(out_channels//4),
+            nn.ReLU(inplace=True)
         )
         
-        # Fusion layer
-        self.fusion = nn.Sequential(
-            nn.Conv2d(3, 8, 3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(8, 1, 1),
-            nn.Sigmoid()
-        )
-    
-    def forward(self, x):
-        # Detect different bubble characteristics
-        ring_response = self.ring_detector(x)
-        center_response = self.center_detector(x)
-        edge_response = self.edge_detector(x)
-        
-        # Fuse all responses
-        combined = torch.cat([ring_response, center_response, edge_response], dim=1)
-        bubble_mask = self.fusion(combined)
-        
-        return {
-            'bubble_mask': bubble_mask,
-            'ring_strength': ring_response,
-            'center_darkness': center_response,
-            'edge_irregularity': edge_response
-        }
-
-class TurbidityAnalysisModule(nn.Module):
-    """Turbidity analysis module for MIC testing."""
-    
-    def __init__(self, in_channels: int = 96):
-        super().__init__()
-        
-        self.turbidity_extractor = nn.Sequential(
-            nn.Conv2d(in_channels, 64, 3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 32, 3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(32, 16, 3, padding=1),
-            nn.ReLU(inplace=True),
+        # Global context for medical image understanding
+        self.global_context = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
-            nn.Flatten(),
-            nn.Linear(16, 1),
-            nn.Sigmoid()
+            nn.Conv2d(in_channels, out_channels//4, 1),
+            nn.ReLU(inplace=True)
+        )
+        
+        self.fusion = nn.Sequential(
+            nn.Conv2d(out_channels, out_channels, 1),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True)
         )
     
     def forward(self, x):
-        return self.turbidity_extractor(x)
+        # Get input size for upsampling
+        _, _, h, w = x.size()
+        
+        # Multi-scale features
+        s1 = self.scale1(x)
+        s2 = self.scale2(x)
+        s3 = self.scale3(x)
+        
+        # Global context
+        gc = self.global_context(x)
+        gc = F.interpolate(gc, size=(h, w), mode='nearest')
+        
+        # Concatenate and fuse
+        features = torch.cat([s1, s2, s3, gc], dim=1)
+        out = self.fusion(features)
+        
+        return out
 
-class OpticalInterferenceSuppressor(nn.Module):
-    """Optical interference suppression module."""
+class MICMobileNetV3(nn.Module):
+    """MIC MobileNetV3 for 70x70 biomedical image classification"""
     
-    def __init__(self, in_channels: int = 96):
-        super().__init__()
+    def __init__(self, num_classes=2, width_mult=1.0):
+        super(MICMobileNetV3, self).__init__()
         
-        self.suppression_weights = nn.Sequential(
-            nn.Conv2d(in_channels + 1, 64, 3, padding=1),  # +1 for bubble mask
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 32, 3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(32, in_channels, 1),
-            nn.Sigmoid()
-        )
-    
-    def forward(self, features, bubble_mask):
-        # Combine features with bubble mask
-        combined = torch.cat([features, bubble_mask], dim=1)
-        
-        # Generate suppression weights
-        suppression = self.suppression_weights(combined)
-        
-        # Apply suppression (reduce features in bubble regions)
-        suppressed_features = features * (1.0 - 0.7 * suppression)
-        
-        return suppressed_features
-
-class MIC_MobileNetV3(nn.Module):
-    """
-    MIC-specific MobileNetV3 for colony detection in 70x70 images.
-    
-    Features:
-    - Optimized for small images (70x70)
-    - Air bubble detection and suppression
-    - Turbidity analysis
-    - Optical interference handling
-    - Multi-task learning capability
-    """
-    
-    def __init__(
-        self,
-        num_classes: int = 2,
-        width_mult: float = 1.0,
-        dropout_rate: float = 0.2,
-        enable_bubble_detection: bool = True,
-        enable_turbidity_analysis: bool = True
-    ):
-        super().__init__()
-        
-        self.num_classes = num_classes
-        self.enable_bubble_detection = enable_bubble_detection
-        self.enable_turbidity_analysis = enable_turbidity_analysis
-        
-        # Calculate channel dimensions
-        def make_divisible(v, divisor=8):
-            return max(divisor, int(v + divisor / 2) // divisor * divisor)
-        
-        # Stem
-        input_channel = make_divisible(16 * width_mult)
+        # Initial convolution optimized for 70x70 input
         self.stem = nn.Sequential(
-            nn.Conv2d(3, input_channel, 3, 2, 1, bias=False),  # 70x70 -> 35x35
-            nn.BatchNorm2d(input_channel),
-            nn.Hardswish(inplace=True)
+            nn.Conv2d(3, 16, 3, stride=2, padding=1, bias=False),  # 70x70 -> 35x35
+            nn.BatchNorm2d(16),
+            HardSwish()
         )
         
-        # MobileNetV3-Small configuration adapted for 70x70
-        # [kernel, exp_size, out_channels, use_se, activation, stride]
-        mobile_setting = [
-            [3, 16, 16, True, 'relu', 2],      # 35x35 -> 18x18
-            [3, 72, 24, False, 'relu', 2],     # 18x18 -> 9x9
-            [3, 88, 24, False, 'relu', 1],     # 9x9 -> 9x9
-            [5, 96, 40, True, 'hardswish', 2], # 9x9 -> 5x5 (modified for small input)
-            [5, 240, 40, True, 'hardswish', 1], # 5x5 -> 5x5
-            [5, 240, 40, True, 'hardswish', 1], # 5x5 -> 5x5
-            [5, 120, 48, True, 'hardswish', 1], # 5x5 -> 5x5
-            [5, 144, 48, True, 'hardswish', 1], # 5x5 -> 5x5
-            [5, 288, 96, True, 'hardswish', 2], # 5x5 -> 3x3 (modified)
-            [5, 576, 96, True, 'hardswish', 1], # 3x3 -> 3x3
-            [5, 576, 96, True, 'hardswish', 1], # 3x3 -> 3x3
+        # MobileNetV3 blocks configuration
+        # [in_channels, out_channels, kernel_size, stride, expand_ratio, use_se, use_hs]
+        self.block_configs = [
+            [16, 16, 3, 1, 1, False, False],    # 35x35
+            [16, 24, 3, 2, 4, False, False],    # 35x35 -> 18x18
+            [24, 24, 3, 1, 3, False, False],    # 18x18
+            [24, 40, 5, 2, 3, True, False],     # 18x18 -> 9x9
+            [40, 40, 5, 1, 3, True, False],     # 9x9
+            [40, 40, 5, 1, 3, True, False],     # 9x9
+            [40, 80, 3, 2, 6, False, True],     # 9x9 -> 5x5
+            [80, 80, 3, 1, 2.5, False, True],   # 5x5
+            [80, 80, 3, 1, 2.3, False, True],   # 5x5
+            [80, 80, 3, 1, 2.3, False, True],   # 5x5
+            [80, 112, 3, 1, 6, True, True],     # 5x5
+            [112, 112, 3, 1, 6, True, True],    # 5x5
+            [112, 160, 5, 2, 6, True, True],    # 5x5 -> 3x3
+            [160, 160, 5, 1, 6, True, True],    # 3x3
+            [160, 160, 5, 1, 6, True, True],    # 3x3
         ]
         
-        # Build inverted residual blocks
-        features = []
-        for k, exp_size, c, use_se, act, s in mobile_setting:
-            output_channel = make_divisible(c * width_mult)
-            exp_channel = make_divisible(exp_size * width_mult)
-            features.append(InvertedResidual(
-                input_channel, output_channel, k, s, 
-                exp_channel // input_channel, use_se, act
-            ))
-            input_channel = output_channel
+        # Build MobileNetV3 blocks
+        self.blocks = nn.ModuleList()
+        for i, config in enumerate(self.block_configs):
+            in_ch, out_ch, k, s, e, se, hs = config
+            # Apply width multiplier
+            in_ch = int(in_ch * width_mult)
+            out_ch = int(out_ch * width_mult)
+            expand_ratio = e
+            
+            self.blocks.append(
+                MobileNetV3Block(in_ch, out_ch, k, s, expand_ratio, se, hs)
+            )
         
-        self.features = nn.Sequential(*features)
-        
-        # Feature dimension after backbone
-        feature_dim = make_divisible(96 * width_mult)
-        
-        # MIC-specific modules
-        if self.enable_bubble_detection:
-            self.bubble_detector = AirBubbleDetectionModule(feature_dim)
-            self.optical_suppressor = OpticalInterferenceSuppressor(feature_dim)
-        
-        if self.enable_turbidity_analysis:
-            self.turbidity_analyzer = TurbidityAnalysisModule(feature_dim)
-        
-        # Classification head
-        self.global_pool = nn.AdaptiveAvgPool2d(1)
-        self.classifier = nn.Sequential(
-            nn.Linear(feature_dim, feature_dim // 2),
-            nn.Hardswish(inplace=True),
-            nn.Dropout(dropout_rate),
-            nn.Linear(feature_dim // 2, num_classes)
+        # Medical feature extraction
+        self.medical_features = MedicalFeatureExtractor(
+            int(160 * width_mult), int(160 * width_mult)
         )
         
-        # Quality assessment head
-        self.quality_head = nn.Sequential(
-            nn.Linear(feature_dim, 32),
+        # Final convolution
+        self.final_conv = nn.Sequential(
+            nn.Conv2d(int(160 * width_mult), int(960 * width_mult), 1, bias=False),
+            nn.BatchNorm2d(int(960 * width_mult)),
+            HardSwish()
+        )
+        
+        # Global average pooling and classifier
+        self.global_pool = nn.AdaptiveAvgPool2d(1)
+        
+        # Classifier with dropout for medical imaging
+        self.classifier = nn.Sequential(
+            nn.Linear(int(960 * width_mult), int(1280 * width_mult)),
             nn.ReLU(inplace=True),
-            nn.Linear(32, 4)  # A, B, C, D quality grades
+            nn.Dropout(0.2),
+            nn.Linear(int(1280 * width_mult), num_classes)
         )
         
         # Initialize weights
         self._initialize_weights()
     
     def _initialize_weights(self):
-        """Initialize model weights."""
+        """Initialize model weights"""
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
                 if m.bias is not None:
-                    nn.init.zeros_(m.bias)
+                    nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.BatchNorm2d):
-                nn.init.ones_(m.weight)
-                nn.init.zeros_(m.bias)
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear):
                 nn.init.normal_(m.weight, 0, 0.01)
                 if m.bias is not None:
-                    nn.init.zeros_(m.bias)
+                    nn.init.constant_(m.bias, 0)
     
-    def forward_features(self, x):
-        """Extract features from input."""
-        x = self.stem(x)
-        x = self.features(x)
+    def forward(self, x):
+        # Validate input size
+        if x.shape[-2:] != (70, 70):
+            raise ValueError(f"Expected input size (70, 70), got {x.shape[-2:]}")
+        
+        # Stem
+        x = self.stem(x)  # 70x70 -> 35x35
+        
+        # MobileNetV3 blocks
+        for block in self.blocks:
+            x = block(x)
+        
+        # Medical feature extraction
+        x = self.medical_features(x)
+        
+        # Final convolution
+        x = self.final_conv(x)
+        
+        # Global pooling
+        x = self.global_pool(x)
+        x = x.view(x.size(0), -1)
+        
+        # Classification
+        x = self.classifier(x)
+        
         return x
     
-    def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
-        """
-        Forward pass with multi-task outputs.
+    def get_feature_maps(self, x):
+        """Extract feature maps for visualization"""
+        features = []
         
-        Args:
-            x: Input tensor of shape (batch_size, 3, 70, 70)
-            
-        Returns:
-            Dictionary containing:
-            - classification: Main classification logits
-            - turbidity: Turbidity score (if enabled)
-            - bubble_analysis: Bubble detection results (if enabled)
-            - quality: Quality assessment scores
-        """
-        # Extract features
-        features = self.forward_features(x)
+        # Stem
+        x = self.stem(x)
+        features.append(('stem', x.clone()))
         
-        results = {}
+        # Blocks
+        for i, block in enumerate(self.blocks):
+            x = block(x)
+            if i % 3 == 0:  # Save every 3rd block
+                features.append((f'block_{i}', x.clone()))
         
-        # Bubble detection and suppression
-        if self.enable_bubble_detection:
-            bubble_analysis = self.bubble_detector(features)
-            results['bubble_analysis'] = bubble_analysis
-            
-            # Apply optical interference suppression
-            features = self.optical_suppressor(features, bubble_analysis['bubble_mask'])
+        # Medical features
+        x = self.medical_features(x)
+        features.append(('medical_features', x.clone()))
         
-        # Turbidity analysis
-        if self.enable_turbidity_analysis:
-            turbidity_score = self.turbidity_analyzer(features)
-            results['turbidity'] = turbidity_score
-        
-        # Global pooling for classification
-        pooled_features = self.global_pool(features).flatten(1)
-        
-        # Main classification
-        classification_logits = self.classifier(pooled_features)
-        results['classification'] = classification_logits
-        
-        # Quality assessment
-        quality_scores = self.quality_head(pooled_features)
-        results['quality'] = quality_scores
-        
-        return results
-    
-    def get_model_info(self) -> Dict[str, Any]:
-        """Get model information."""
-        total_params = sum(p.numel() for p in self.parameters())
-        trainable_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
-        
-        return {
-            'name': 'mic_mobilenetv3',
-            'architecture': 'mobilenetv3_mic',
-            'total_parameters': total_params,
-            'trainable_parameters': trainable_params,
-            'input_size': (3, 70, 70),
-            'output_size': self.num_classes,
-            'features': {
-                'bubble_detection': self.enable_bubble_detection,
-                'turbidity_analysis': self.enable_turbidity_analysis,
-                'multi_task': True
-            }
-        }
+        return features
 
-def create_mic_mobilenetv3(
-    num_classes: int = 2,
-    model_size: str = 'small',
-    **kwargs
-) -> MIC_MobileNetV3:
-    """
-    Create MIC-specific MobileNetV3 model.
-    
-    Args:
-        num_classes: Number of output classes
-        model_size: Model size ('small', 'large')
-        **kwargs: Additional arguments
-        
-    Returns:
-        MIC_MobileNetV3: Initialized model
-    """
-    
-    configs = {
-        'small': {
-            'width_mult': 1.0,
-            'dropout_rate': 0.2
-        },
-        'large': {
-            'width_mult': 1.25,
-            'dropout_rate': 0.3
-        }
-    }
-    
-    if model_size not in configs:
-        raise ValueError(f"Unsupported model size: {model_size}")
-    
-    config = configs[model_size]
-    config.update(kwargs)
-    
-    model = MIC_MobileNetV3(num_classes=num_classes, **config)
-    return model
+def create_mic_mobilenetv3(num_classes=2, width_mult=1.0):
+    """Create MIC MobileNetV3 model"""
+    return MICMobileNetV3(num_classes=num_classes, width_mult=width_mult)
 
-# Model configuration for integration
-MODEL_CONFIG = {
-    'name': 'mic_mobilenetv3',
-    'architecture': 'mobilenetv3_mic',
-    'create_function': create_mic_mobilenetv3,
-    'default_params': {
-        'num_classes': 2,
-        'model_size': 'small',
-        'dropout_rate': 0.2,
-        'enable_bubble_detection': True,
-        'enable_turbidity_analysis': True
-    },
-    'training_params': {
-        'batch_size': 32,
-        'learning_rate': 0.001,
-        'weight_decay': 1e-4,
-        'epochs': 50,
-        'optimizer': 'adamw',
-        'scheduler': 'cosine'
-    },
-    'estimated_parameters': 2.5,
-    'description': 'MIC-specific MobileNetV3 with air bubble detection and turbidity analysis'
-}
+# Model variants
+def mic_mobilenetv3_small(num_classes=2):
+    """Small variant with reduced width"""
+    return create_mic_mobilenetv3(num_classes=num_classes, width_mult=0.75)
+
+def mic_mobilenetv3_large(num_classes=2):
+    """Large variant with increased width"""
+    return create_mic_mobilenetv3(num_classes=num_classes, width_mult=1.25)
 
 if __name__ == "__main__":
-    # Test model creation
-    print("🔍 Testing MIC MobileNetV3 model creation...")
+    # Test the model
+    model = MICMobileNetV3(num_classes=2)
     
-    model = create_mic_mobilenetv3()
-    model_info = model.get_model_info()
+    # Count parameters
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     
-    print(f"✅ Created {model_info['name']} with {model_info['total_parameters']:,} parameters")
-    print(f"   Features: {model_info['features']}")
+    print(f"MIC MobileNetV3 Model:")
+    print(f"Total parameters: {total_params:,}")
+    print(f"Trainable parameters: {trainable_params:,}")
     
     # Test forward pass
-    dummy_input = torch.randn(2, 3, 70, 70)
-    model.eval()
-    
-    with torch.no_grad():
-        outputs = model(dummy_input)
-    
-    print(f"   - Input shape: {dummy_input.shape}")
-    print(f"   - Classification output: {outputs['classification'].shape}")
-    
-    if 'turbidity' in outputs:
-        print(f"   - Turbidity output: {outputs['turbidity'].shape}")
-    
-    if 'bubble_analysis' in outputs:
-        print(f"   - Bubble mask: {outputs['bubble_analysis']['bubble_mask'].shape}")
-    
-    print(f"🎯 MIC MobileNetV3 ready for training!")
+    test_input = torch.randn(1, 3, 70, 70)
+    try:
+        output = model(test_input)
+        print(f"✓ Forward pass successful")
+        print(f"Input shape: {test_input.shape}")
+        print(f"Output shape: {output.shape}")
+        
+        # Test feature extraction
+        features = model.get_feature_maps(test_input)
+        print(f"✓ Feature extraction successful")
+        print(f"Number of feature maps: {len(features)}")
+        
+    except Exception as e:
+        print(f"✗ Forward pass failed: {e}")

@@ -1,5 +1,6 @@
 """
-真实数据加载器 - 处理bioast_dataset的复杂目录结构
+Real Biomedical Data Loader
+用于加载bioast_dataset中的真实70x70生物医学图像数据
 """
 
 import os
@@ -11,8 +12,8 @@ from typing import Tuple, List, Optional
 import json
 import logging
 
-class RealDataLoader:
-    """真实数据加载器"""
+class RealBiomedicalDataLoader:
+    """真实生物医学数据加载器 - 使用bioast_dataset"""
     
     def __init__(self, data_dir: str = "bioast_dataset", image_size: Tuple[int, int] = (70, 70)):
         self.data_dir = data_dir
@@ -29,87 +30,84 @@ class RealDataLoader:
     
     def _load_data(self):
         """加载真实数据"""
-        self.logger.info(f"Loading real data from {self.data_dir}")
-        
-        # 检查数据目录结构
         positive_dir = os.path.join(self.data_dir, 'positive')
         negative_dir = os.path.join(self.data_dir, 'negative')
         
         if not (os.path.exists(positive_dir) and os.path.exists(negative_dir)):
-            raise ValueError(f"Data directories not found: {positive_dir}, {negative_dir}")
+            raise ValueError(f"Real data directories not found in {self.data_dir}")
         
-        # 加载训练、验证、测试数据
-        self._train_data = self._load_split_data('train')
-        self._val_data = self._load_split_data('val')
-        self._test_data = self._load_split_data('test')
+        # 检查是否有预分割的train/val/test结构
+        train_pos_dir = os.path.join(positive_dir, 'train')
+        val_pos_dir = os.path.join(positive_dir, 'val')
+        test_pos_dir = os.path.join(positive_dir, 'test')
         
-        train_images, train_labels = self._train_data
-        val_images, val_labels = self._val_data
-        test_images, test_labels = self._test_data
-        
-        self.logger.info(f"Loaded {len(train_images)} training samples")
-        self.logger.info(f"Loaded {len(val_images)} validation samples")
-        self.logger.info(f"Loaded {len(test_images)} test samples")
+        if os.path.exists(train_pos_dir) and os.path.exists(val_pos_dir) and os.path.exists(test_pos_dir):
+            self.logger.info("Found pre-split dataset structure, loading train/val/test splits")
+            self._load_presplit_data()
+        else:
+            raise ValueError("Expected pre-split train/val/test structure not found")
     
-    def _load_split_data(self, split: str) -> Tuple[np.ndarray, np.ndarray]:
+    def _load_presplit_data(self):
+        """加载预分割的数据"""
+        # 加载训练数据
+        train_images, train_labels = self._load_split_data('train')
+        val_images, val_labels = self._load_split_data('val') 
+        test_images, test_labels = self._load_split_data('test')
+        
+        self._train_data = (train_images, train_labels)
+        self._val_data = (val_images, val_labels)
+        self._test_data = (test_images, test_labels)
+        
+        self.logger.info(f"✅ Loaded real biomedical data:")
+        self.logger.info(f"  📊 Train: {len(train_images)} samples ({np.sum(train_labels)} positive, {len(train_labels) - np.sum(train_labels)} negative)")
+        self.logger.info(f"  📊 Val: {len(val_images)} samples ({np.sum(val_labels)} positive, {len(val_labels) - np.sum(val_labels)} negative)")
+        self.logger.info(f"  📊 Test: {len(test_images)} samples ({np.sum(test_labels)} positive, {len(test_labels) - np.sum(test_labels)} negative)")
+        self.logger.info(f"  📐 Image size: {self.image_size}")
+    
+    def _load_split_data(self, split_name: str):
         """加载指定分割的数据"""
         images = []
         labels = []
         
         # 加载positive样本
-        pos_split_dir = os.path.join(self.data_dir, 'positive', split)
+        pos_split_dir = os.path.join(self.data_dir, 'positive', split_name)
         if os.path.exists(pos_split_dir):
-            for filename in os.listdir(pos_split_dir):
-                if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-                    img_path = os.path.join(pos_split_dir, filename)
-                    image = self._load_image(img_path)
-                    if image is not None:
-                        images.append(image)
-                        labels.append(1)  # positive
+            pos_files = [f for f in os.listdir(pos_split_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+            self.logger.info(f"Loading {len(pos_files)} positive {split_name} samples...")
+            
+            for filename in pos_files:
+                img_path = os.path.join(pos_split_dir, filename)
+                image = cv2.imread(img_path)
+                if image is not None:
+                    # 调整大小到指定尺寸
+                    image = cv2.resize(image, self.image_size)
+                    # 转换BGR到RGB
+                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    # 归一化到[0,1]
+                    image = image.astype(np.float32) / 255.0
+                    images.append(image)
+                    labels.append(1)  # positive
         
         # 加载negative样本
-        neg_split_dir = os.path.join(self.data_dir, 'negative', split)
+        neg_split_dir = os.path.join(self.data_dir, 'negative', split_name)
         if os.path.exists(neg_split_dir):
-            for filename in os.listdir(neg_split_dir):
-                if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-                    img_path = os.path.join(neg_split_dir, filename)
-                    image = self._load_image(img_path)
-                    if image is not None:
-                        images.append(image)
-                        labels.append(0)  # negative
-        
-        if len(images) == 0:
-            self.logger.warning(f"No images found for {split} split")
-            # 返回空数组但保持正确的形状
-            return np.empty((0, *self.image_size, 3), dtype=np.float32), np.empty((0,), dtype=np.int64)
-        
-        images = np.array(images)
-        labels = np.array(labels)
-        
-        pos_count = np.sum(labels)
-        neg_count = len(labels) - pos_count
-        self.logger.info(f"{split} split: {len(images)} images ({pos_count} positive, {neg_count} negative)")
-        
-        return images, labels
-    
-    def _load_image(self, img_path: str) -> Optional[np.ndarray]:
-        """加载单个图像"""
-        try:
-            image = cv2.imread(img_path)
-            if image is None:
-                return None
+            neg_files = [f for f in os.listdir(neg_split_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+            self.logger.info(f"Loading {len(neg_files)} negative {split_name} samples...")
             
-            # 调整大小到指定尺寸
-            image = cv2.resize(image, self.image_size)
-            # 转换BGR到RGB
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            # 归一化到[0,1]
-            image = image.astype(np.float32) / 255.0
-            
-            return image
-        except Exception as e:
-            self.logger.warning(f"Failed to load image {img_path}: {e}")
-            return None
+            for filename in neg_files:
+                img_path = os.path.join(neg_split_dir, filename)
+                image = cv2.imread(img_path)
+                if image is not None:
+                    # 调整大小到指定尺寸
+                    image = cv2.resize(image, self.image_size)
+                    # 转换BGR到RGB
+                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    # 归一化到[0,1]
+                    image = image.astype(np.float32) / 255.0
+                    images.append(image)
+                    labels.append(0)  # negative
+        
+        return np.array(images), np.array(labels)
     
     def get_train_data(self) -> Tuple[np.ndarray, np.ndarray]:
         """获取训练数据"""
@@ -130,20 +128,33 @@ class RealDataLoader:
         test_images, test_labels = self._test_data
         
         return {
+            'dataset_type': 'real_biomedical',
+            'data_source': self.data_dir,
             'train_samples': len(train_images),
             'val_samples': len(val_images),
             'test_samples': len(test_images),
-            'image_shape': train_images[0].shape if len(train_images) > 0 else None,
-            'num_classes': 2,
+            'total_samples': len(train_images) + len(val_images) + len(test_images),
+            'image_shape': train_images[0].shape,
+            'image_size': self.image_size,
+            'num_classes': len(np.unique(train_labels)),
             'class_distribution': {
-                'train': np.bincount(train_labels, minlength=2).tolist() if len(train_labels) > 0 else [0, 0],
-                'val': np.bincount(val_labels, minlength=2).tolist() if len(val_labels) > 0 else [0, 0],
-                'test': np.bincount(test_labels, minlength=2).tolist() if len(test_labels) > 0 else [0, 0]
+                'train': {
+                    'positive': int(np.sum(train_labels)),
+                    'negative': int(len(train_labels) - np.sum(train_labels))
+                },
+                'val': {
+                    'positive': int(np.sum(val_labels)),
+                    'negative': int(len(val_labels) - np.sum(val_labels))
+                },
+                'test': {
+                    'positive': int(np.sum(test_labels)),
+                    'negative': int(len(test_labels) - np.sum(test_labels))
+                }
             }
         }
 
-class RealDataset(Dataset):
-    """真实数据集类"""
+class BiomedicalDataset(Dataset):
+    """生物医学数据集类"""
     
     def __init__(self, images: np.ndarray, labels: np.ndarray, transform=None):
         self.images = images
@@ -171,14 +182,11 @@ class RealDataset(Dataset):
         
         return image, torch.tensor(label, dtype=torch.long)
 
-def create_real_data_loaders(data_dir: str = "bioast_dataset",
-                            image_size: Tuple[int, int] = (70, 70),
-                            batch_size: int = 32,
-                            num_workers: int = 4) -> Tuple[DataLoader, DataLoader, DataLoader]:
+def create_real_data_loaders(batch_size: int = 32, num_workers: int = 4) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """创建真实数据加载器"""
     
-    # 创建数据加载器
-    data_loader = RealDataLoader(data_dir, image_size)
+    # 创建数据加载器实例
+    data_loader = RealBiomedicalDataLoader()
     
     # 获取数据
     train_images, train_labels = data_loader.get_train_data()
@@ -186,9 +194,9 @@ def create_real_data_loaders(data_dir: str = "bioast_dataset",
     test_images, test_labels = data_loader.get_test_data()
     
     # 创建数据集
-    train_dataset = RealDataset(train_images, train_labels)
-    val_dataset = RealDataset(val_images, val_labels)
-    test_dataset = RealDataset(test_images, test_labels)
+    train_dataset = BiomedicalDataset(train_images, train_labels)
+    val_dataset = BiomedicalDataset(val_images, val_labels)
+    test_dataset = BiomedicalDataset(test_images, test_labels)
     
     # 创建数据加载器
     train_loader = DataLoader(
@@ -217,22 +225,43 @@ def create_real_data_loaders(data_dir: str = "bioast_dataset",
     
     return train_loader, val_loader, test_loader
 
+# 测试代码
 if __name__ == "__main__":
-    # 测试真实数据加载器
-    try:
-        data_loader = RealDataLoader()
-        info = data_loader.get_data_info()
-        print("Real Data Info:")
-        for key, value in info.items():
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    
+    print("🧬 Testing Real Biomedical Data Loader")
+    print("=" * 50)
+    
+    # 创建数据加载器
+    data_loader = RealBiomedicalDataLoader()
+    
+    # 获取数据信息
+    info = data_loader.get_data_info()
+    print("\n📊 Dataset Information:")
+    for key, value in info.items():
+        if isinstance(value, dict):
+            print(f"  {key}:")
+            for k, v in value.items():
+                print(f"    {k}: {v}")
+        else:
             print(f"  {key}: {value}")
-        
-        # 创建PyTorch数据加载器
-        train_loader, val_loader, test_loader = create_real_data_loaders()
-        
-        print(f"\nDataLoader Info:")
-        print(f"  Train batches: {len(train_loader)}")
-        print(f"  Val batches: {len(val_loader)}")
-        print(f"  Test batches: {len(test_loader)}")
-        
-    except Exception as e:
-        print(f"Error loading real data: {e}")
+    
+    # 创建PyTorch数据加载器
+    train_loader, val_loader, test_loader = create_real_data_loaders(batch_size=16)
+    
+    print(f"\n🔄 DataLoader Information:")
+    print(f"  Train batches: {len(train_loader)}")
+    print(f"  Val batches: {len(val_loader)}")
+    print(f"  Test batches: {len(test_loader)}")
+    
+    # 测试一个批次
+    print(f"\n🧪 Testing batch loading...")
+    for images, labels in train_loader:
+        print(f"  ✅ Batch shape: {images.shape}")
+        print(f"  ✅ Label shape: {labels.shape}")
+        print(f"  ✅ Image range: [{images.min():.3f}, {images.max():.3f}]")
+        print(f"  ✅ Labels: {labels[:8].tolist()}")
+        break
+    
+    print(f"\n🎉 Real biomedical data loader test completed!")

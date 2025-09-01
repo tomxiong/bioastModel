@@ -8,7 +8,7 @@ This is a biomedical image analysis project focused on **70×70 pixel colony det
 - **Positive**: Colony present in image
 - **Negative**: No colony or only air bubbles present
 
-The project has implemented and trained **15+ different model architectures** with comprehensive performance analysis, ONNX conversion capabilities, and extensive evaluation frameworks.
+The project has implemented and trained **30+ different model architectures** with comprehensive performance analysis, ONNX conversion capabilities, and extensive evaluation frameworks. This is a mature codebase with extensive automation scripts and a modular architecture for training, evaluation, and deployment.
 
 ## Architecture and Structure
 
@@ -47,24 +47,48 @@ The project has implemented and trained **15+ different model architectures** wi
 
 ## Common Development Tasks
 
+### Environment Setup
+
+**IMPORTANT**: This project uses a local virtual environment (`.venv`) and uv for package management.
+
+**Environment Rules**:
+- **Always use the local .venv environment**: All Python commands should be run within the `.venv` virtual environment
+- **Package Installation**: Use `uv pip install <package>` instead of `pip install` for all new package installations
+- **Environment Activation**: Ensure `.venv` is activated before running any Python scripts
+
+**Virtual Environment Commands**:
+```bash
+# Activate virtual environment (Linux/macOS)
+source .venv/bin/activate
+
+# Install new packages (REQUIRED method)
+uv pip install <package_name>
+
+# Install from requirements
+uv pip install -r requirements.txt
+
+# Run Python scripts with virtual environment
+.venv/bin/python script.py
+```
+
 ### Training Models
 
 **Single Model Training**:
 ```bash
 # List available models
-.venv\Scripts\python train_single_model.py --list_models
+.venv/bin/python train_single_model.py --list_models
 
 # Train specific model with custom parameters
-.venv\Scripts\python train_single_model.py --model efficientnet_b0 --epochs 30 --batch_size 32 --lr 0.001
+.venv/bin/python train_single_model.py --model efficientnet_b0 --epochs 30 --batch_size 32 --lr 0.001
 ```
 
 **Batch Training**:
 ```bash
 # Train all models in sequence
-.venv\Scripts\python scripts/auto_train_sequence.py
+.venv/bin/python scripts/auto_train_sequence.py
 
 # Train multiple models
-.venv\Scripts\python train_all_models.py
+.venv/bin/python train_all_models.py
 ```
 
 ### Model Evaluation and Testing
@@ -72,31 +96,31 @@ The project has implemented and trained **15+ different model architectures** wi
 **Batch Testing**:
 ```bash
 # Test all trained models
-.venv\Scripts\python scripts/batch_test_models.py
+.venv/bin/python scripts/batch_test_models.py
 
 # Validate ONNX models
-.venv\Scripts\python scripts/batch_validate_all_onnx_models.py
+.venv/bin/python scripts/batch_validate_all_onnx_models.py
 ```
 
 **Individual Model Analysis**:
 ```bash
 # Generate comprehensive analysis
-.venv\Scripts\python scripts/comprehensive_model_analysis.py
+.venv/bin/python scripts/comprehensive_model_analysis.py
 
 # Compare model performance
-.venv\Scripts\python scripts/compare_models.py
+.venv/bin/python scripts/compare_models.py
 ```
 
 ### ONNX Conversion
 
 **Convert Single Model**:
 ```bash
-.venv\Scripts\python scripts/convert_single_model_to_onnx.py --model <model_name>
+.venv/bin/python scripts/convert_single_model_to_onnx.py --model <model_name>
 ```
 
 **Batch Conversion**:
 ```bash
-.venv\Scripts\python scripts/batch_convert_models_to_onnx.py
+.venv/bin/python scripts/batch_convert_models_to_onnx.py
 ```
 
 ### Monitoring and Analysis
@@ -104,17 +128,17 @@ The project has implemented and trained **15+ different model architectures** wi
 **Training Progress**:
 ```bash
 # Monitor specific model training
-.venv\Scripts\python scripts/monitor_<model_name>_training.py
+.venv/bin/python scripts/monitor_<model_name>_training.py
 
 # Check training progress
-.venv\Scripts\python scripts/check_test_progress.py
+.venv/bin/python scripts/check_test_progress.py
 ```
 
 **Generate Reports**:
 ```bash
 # Generate analysis reports
-.venv\Scripts\python scripts/generate_detailed_analysis.py
-.venv\Scripts\python scripts/generate_final_analysis.py
+.venv/bin/python scripts/generate_detailed_analysis.py
+.venv/bin/python scripts/generate_final_analysis.py
 ```
 
 ## Model Performance Hierarchy
@@ -176,51 +200,62 @@ Data loading automatically handles this structure via `BioastDataset` class.
 
 ## Development Environment
 
-### Python Environment Setup
-**IMPORTANT**: This project uses a local virtual environment (`.venv`) and uv for package management.
+### Key Development Commands
 
-**Environment Rules**:
-- **Always use the local .venv environment**: All Python commands should be run within the `.venv` virtual environment
-- **Package Installation**: Use `uv pip install <package>` instead of `pip install` for all new package installations
-- **Environment Activation**: Ensure `.venv` is activated before running any Python scripts
-- **Encoding Fix**: Set console encoding to UTF-8 to avoid Chinese text display issues
-- **Code Standards**: All Python scripts should use English for console output to avoid encoding issues
-
-**Package Management Commands**:
+**Environment Management**:
 ```bash
-# Install new packages (REQUIRED method)
-uv pip install <package_name>
+# Check if uv is available
+which uv
 
-# Install from requirements
+# Install dependencies
 uv pip install -r requirements.txt
 
-# List installed packages
-uv pip list
+# Run any Python script (always use virtual environment)
+.venv/bin/python <script_name>.py
 
-# Upgrade packages
-uv pip install --upgrade <package_name>
+# For Windows, use:
+.venv\Scripts\python <script_name>.py
 ```
 
-**Console Encoding Setup** (Windows):
+**Code Quality and Testing**:
 ```bash
-# Set UTF-8 encoding before running Python scripts
-chcp 65001
+# Run linting (if available)
+.venv/bin/python -m flake8 .
 
-# Or run Python with UTF-8 encoding
-$env:PYTHONIOENCODING="utf-8"; .venv/Scripts/python your_script.py
+# Run tests (if test suite exists)
+.venv/bin/python -m pytest
+
+# Type checking (if mypy is configured)
+.venv/bin/python -m mypy .
 ```
 
-**Dependencies**: Main dependencies include:
-- PyTorch + torchvision
-- scikit-learn
-- matplotlib, seaborn
-- PIL/Pillow
-- ONNX, onnxruntime
-- uv (package manager)
+**Dataset Management**:
+```bash
+# Check dataset status
+.venv/bin/python dataset_manager.py --check
 
-**GPU Support**: All training scripts detect and use CUDA when available.
+# Update dataset
+.venv/bin/python dataset_manager.py --update-dataset "path/to/new/dataset"
 
-**Python Path**: Scripts add project root to sys.path for imports.
+# Sync dataset (if using the sync script)
+./sync_bioast_dataset.sh
+```
+
+### Important Development Notes
+
+**Model Registry**: The project uses a model registry system (`model_registry.json`) to track trained models and their performance.
+
+**Experiment Management**: Training experiments are stored in `experiments/experiment_<timestamp>/` directories and excluded from git.
+
+**Checkpoints**: Model checkpoints are saved in `checkpoints/<model_name>/` with `best.pth` and `latest.pth` files.
+
+**Reports**: Analysis reports are generated in `reports/` directory with comprehensive performance metrics.
+
+**Chinese Comments**: The codebase contains Chinese comments and documentation - this is a bilingual project.
+
+**GPU Support**: All training scripts automatically detect and use CUDA when available.
+
+**Model Input Size**: All models use 70×70 input resolution (not standard 224×224) for this specific biomedical application.
 
 ## Important Notes
 
@@ -230,3 +265,7 @@ $env:PYTHONIOENCODING="utf-8"; .venv/Scripts/python your_script.py
 - ONNX models are committed for deployment
 - Chinese comments throughout - this is a bilingual codebase
 - Comprehensive performance tracking and comparison built-in
+- Use `uv` for package management, not `pip`
+- Always activate the virtual environment before running scripts
+- The project has extensive automation scripts in the `scripts/` directory
+- Model configurations are centralized in `core/config/model_configs.py`

@@ -1,0 +1,431 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生物医学图像分析模型管理系统 - 最终报告</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .summary-card p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .validation-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 30px;
+            color: #856404;
+        }
+        .validation-notice strong {
+            color: #856404;
+        }
+        .models-section {
+            padding: 30px;
+        }
+        .section-title {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .model-grid {
+            display: grid;
+            gap: 20px;
+        }
+        .model-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .model-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .model-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .model-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-validated-failed {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .model-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .detail-item {
+            text-align: center;
+        }
+        .detail-label {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+        .onnx-info {
+            background: #e8f5e8;
+            border: 1px solid #c3e6c3;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .onnx-info.failed {
+            background: #ffeaa7;
+            border-color: #fdcb6e;
+        }
+        .onnx-info.validated-failed {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+        }
+        .validation-details {
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 生物医学图像分析模型管理系统</h1>
+            <p>最终综合性能报告 - 包含 ONNX 转换验证结果</p>
+            <p>生成时间: 2025-08-08 13:50:13</p>
+        </div>
+        
+        <div class="validation-notice">
+            <strong>🔍 ONNX 转换验证完成:</strong> 
+            已完成对所有 ONNX 模型的性能验证。airbubble_hybrid_net 由于架构复杂性超出 ONNX 兼容性限制，
+            转换后性能严重下降（准确率从 99.16% 降至 46.81%），建议继续使用 PyTorch 版本。
+        </div>
+        
+        <div class="summary">
+            <div class="summary-card">
+                <h3>41</h3>
+                <p>独特模型数量</p>
+            </div>
+            <div class="summary-card">
+                <h3>7</h3>
+                <p>成功训练模型</p>
+            </div>
+            <div class="summary-card">
+                <h3>3</h3>
+                <p>ONNX转换成功</p>
+            </div>
+            <div class="summary-card">
+                <h3>42.9%</h3>
+                <p>ONNX转换率</p>
+            </div>
+            <div class="summary-card">
+                <h3>75.0%</h3>
+                <p>ONNX验证成功率</p>
+            </div>
+            <div class="summary-card">
+                <h3>99.2%</h3>
+                <p>最高准确率</p>
+            </div>
+        </div>
+        
+        <div class="models-section">
+            <h2 class="section-title">📊 模型详细信息</h2>
+            <div class="model-grid">
+    
+                <div class="model-card">
+                    <div class="model-header">
+                        <div class="model-name">convnext_tiny</div>
+                        <div class="status-badge status-failed">
+                            PyTorch Only
+                        </div>
+                    </div>
+                    <div class="model-details">
+                        <div class="detail-item">
+                            <div class="detail-label">最佳准确率</div>
+                            <div class="detail-value">53.19%</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">训练次数</div>
+                            <div class="detail-value">2</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">最佳时间戳</div>
+                            <div class="detail-value">20250808_013331</div>
+                        </div>
+                    </div>
+                    
+                <div class="onnx-info failed">
+                    <strong>❌ ONNX转换失败</strong><br>
+                    需要进一步优化架构兼容性
+                </div>
+                
+                </div>
+            
+                <div class="model-card">
+                    <div class="model-header">
+                        <div class="model-name">airbubble_hybrid_net</div>
+                        <div class="status-badge status-validated-failed">
+                            ONNX Failed
+                        </div>
+                    </div>
+                    <div class="model-details">
+                        <div class="detail-item">
+                            <div class="detail-label">最佳准确率</div>
+                            <div class="detail-value">99.16%</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">训练次数</div>
+                            <div class="detail-value">6</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">最佳时间戳</div>
+                            <div class="detail-value">20250808_013453</div>
+                        </div>
+                    </div>
+                    
+                <div class="onnx-info validated-failed">
+                    <strong>⚠️ ONNX转换验证失败</strong><br>
+                    原始准确率: 99.16%<br>
+                    ONNX准确率: 46.81%<br>
+                    <div class="validation-details">
+                        准确率损失: 52.36%<br>
+                        预测一致性: 47.0%<br>
+                        建议: 继续使用 PyTorch 模型
+                    </div>
+                </div>
+                
+                </div>
+            
+                <div class="model-card">
+                    <div class="model-header">
+                        <div class="model-name">efficientnet</div>
+                        <div class="status-badge status-failed">
+                            PyTorch Only
+                        </div>
+                    </div>
+                    <div class="model-details">
+                        <div class="detail-item">
+                            <div class="detail-label">最佳准确率</div>
+                            <div class="detail-value">99.09%</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">训练次数</div>
+                            <div class="detail-value">6</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">最佳时间戳</div>
+                            <div class="detail-value">20250808_014214</div>
+                        </div>
+                    </div>
+                    
+                <div class="onnx-info failed">
+                    <strong>❌ ONNX转换失败</strong><br>
+                    需要进一步优化架构兼容性
+                </div>
+                
+                </div>
+            
+                <div class="model-card">
+                    <div class="model-header">
+                        <div class="model-name">efficient_cnn</div>
+                        <div class="status-badge status-success">
+                            ONNX Ready
+                        </div>
+                    </div>
+                    <div class="model-details">
+                        <div class="detail-item">
+                            <div class="detail-label">最佳准确率</div>
+                            <div class="detail-value">99.16%</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">训练次数</div>
+                            <div class="detail-value">9</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">最佳时间戳</div>
+                            <div class="detail-value">20250808_014114</div>
+                        </div>
+                    </div>
+                    
+                <div class="onnx-info">
+                    <strong>✅ ONNX转换成功</strong><br>
+                    模型大小: 12.482783317565918 MB
+                </div>
+                
+                </div>
+            
+                <div class="model-card">
+                    <div class="model-header">
+                        <div class="model-name">simplified_airbubble_detector</div>
+                        <div class="status-badge status-success">
+                            ONNX Ready
+                        </div>
+                    </div>
+                    <div class="model-details">
+                        <div class="detail-item">
+                            <div class="detail-label">最佳准确率</div>
+                            <div class="detail-value">98.40%</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">训练次数</div>
+                            <div class="detail-value">9</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">最佳时间戳</div>
+                            <div class="detail-value">20250807_213233</div>
+                        </div>
+                    </div>
+                    
+                <div class="onnx-info">
+                    <strong>✅ ONNX转换成功</strong><br>
+                    模型大小: 0.5314655303955078 MB
+                </div>
+                
+                </div>
+            
+                <div class="model-card">
+                    <div class="model-header">
+                        <div class="model-name">micro_vit</div>
+                        <div class="status-badge status-failed">
+                            PyTorch Only
+                        </div>
+                    </div>
+                    <div class="model-details">
+                        <div class="detail-item">
+                            <div class="detail-label">最佳准确率</div>
+                            <div class="detail-value">99.01%</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">训练次数</div>
+                            <div class="detail-value">2</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">最佳时间戳</div>
+                            <div class="detail-value">20250807_214559</div>
+                        </div>
+                    </div>
+                    
+                <div class="onnx-info failed">
+                    <strong>❌ ONNX转换失败</strong><br>
+                    需要进一步优化架构兼容性
+                </div>
+                
+                </div>
+            
+                <div class="model-card">
+                    <div class="model-header">
+                        <div class="model-name">coatnet</div>
+                        <div class="status-badge status-success">
+                            ONNX Ready
+                        </div>
+                    </div>
+                    <div class="model-details">
+                        <div class="detail-item">
+                            <div class="detail-label">最佳准确率</div>
+                            <div class="detail-value">94.30%</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">训练次数</div>
+                            <div class="detail-value">1</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">最佳时间戳</div>
+                            <div class="detail-value">20250808_013213</div>
+                        </div>
+                    </div>
+                    
+                <div class="onnx-info">
+                    <strong>✅ ONNX转换成功</strong><br>
+                    模型大小: 99.42683410644531 MB
+                </div>
+                
+                </div>
+            
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+    
