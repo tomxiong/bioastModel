@@ -11,6 +11,8 @@ from .core.interfaces import (
     ModelInterface, ConfigManager, DataProcessor, FineTuner, AutomationEngine,
     ConfigurationManager, BaseConfigValidator, ConfigValidator
 )
+from .core.model_adapters import ModelAdapter, ModelFactory, ModelManager
+from .core.model_config import ModelConfigurationSystem, ModelConfigurationManager
 
 __all__ = [
     'ModelCapabilities',
@@ -24,5 +26,10 @@ __all__ = [
     'AutomationEngine',
     'ConfigurationManager',
     'BaseConfigValidator',
-    'ConfigValidator'
+    'ConfigValidator',
+    'ModelAdapter',
+    'ModelFactory',
+    'ModelManager',
+    'ModelConfigurationSystem',
+    'ModelConfigurationManager'
 ]
