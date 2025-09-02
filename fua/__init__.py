@@ -63,6 +63,64 @@ except ImportError:
     create_cv_optimizer = None
     get_default_search_space = None
 
+# Fine-tuning components (Sprint 4)
+try:
+    from .finetuning.layered_lr_scheduler import (
+        LayeredLRScheduler, DifferentialLearningRateFinder,
+        create_layered_scheduler, create_lr_finder,
+        get_resnet_layer_groups, get_vit_layer_groups, get_efficientnet_layer_groups
+    )
+    from .finetuning.loss_function_factory import (
+        LossFunctionFactory, create_loss, register_custom_loss,
+        get_classification_loss_configs, get_imbalanced_loss_configs,
+        get_metric_learning_loss_configs, get_segmentation_loss_configs
+    )
+    from .finetuning.architecture_modifier import (
+        ArchitectureModifier, create_architecture_modifier
+    )
+    from .finetuning.finetuning_monitor import (
+        FineTuningMonitor, TrainingMetrics, GradientMonitor, ActivationMonitor,
+        create_finetuning_monitor
+    )
+    from .finetuning.advanced_finetuner import (
+        FineTuningConfig, FineTuningResult, AdvancedFineTuner,
+        create_advanced_finetuner, get_default_finetuning_config
+    )
+    FINETUNING_AVAILABLE = True
+except ImportError:
+    FINETUNING_AVAILABLE = False
+    # Layered LR Scheduler
+    LayeredLRScheduler = None
+    DifferentialLearningRateFinder = None
+    create_layered_scheduler = None
+    create_lr_finder = None
+    get_resnet_layer_groups = None
+    get_vit_layer_groups = None
+    get_efficientnet_layer_groups = None
+    # Loss Function Factory
+    LossFunctionFactory = None
+    create_loss = None
+    register_custom_loss = None
+    get_classification_loss_configs = None
+    get_imbalanced_loss_configs = None
+    get_metric_learning_loss_configs = None
+    get_segmentation_loss_configs = None
+    # Architecture Modifier
+    ArchitectureModifier = None
+    create_architecture_modifier = None
+    # Fine-tuning Monitor
+    FineTuningMonitor = None
+    TrainingMetrics = None
+    GradientMonitor = None
+    ActivationMonitor = None
+    create_finetuning_monitor = None
+    # Advanced Fine-tuner
+    FineTuningConfig = None
+    FineTuningResult = None
+    AdvancedFineTuner = None
+    create_advanced_finetuner = None
+    get_default_finetuning_config = None
+
 __all__ = [
     # Core
     'ModelCapabilities',
@@ -104,8 +162,36 @@ __all__ = [
     'create_hyperparameter_optimizer',
     'create_cv_optimizer',
     'get_default_search_space',
+    # Fine-tuning
+    'LayeredLRScheduler',
+    'DifferentialLearningRateFinder',
+    'create_layered_scheduler',
+    'create_lr_finder',
+    'get_resnet_layer_groups',
+    'get_vit_layer_groups',
+    'get_efficientnet_layer_groups',
+    'LossFunctionFactory',
+    'create_loss',
+    'register_custom_loss',
+    'get_classification_loss_configs',
+    'get_imbalanced_loss_configs',
+    'get_metric_learning_loss_configs',
+    'get_segmentation_loss_configs',
+    'ArchitectureModifier',
+    'create_architecture_modifier',
+    'FineTuningMonitor',
+    'TrainingMetrics',
+    'GradientMonitor',
+    'ActivationMonitor',
+    'create_finetuning_monitor',
+    'FineTuningConfig',
+    'FineTuningResult',
+    'AdvancedFineTuner',
+    'create_advanced_finetuner',
+    'get_default_finetuning_config',
     # Flags
     'DEPLOYMENT_AVAILABLE',
     'PIPELINE_AVAILABLE',
-    'OPTIMIZATION_AVAILABLE'
+    'OPTIMIZATION_AVAILABLE',
+    'FINETUNING_AVAILABLE'
 ]
