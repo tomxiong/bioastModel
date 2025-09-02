@@ -198,6 +198,60 @@ data/
 - **[手动操作手册](MANUAL_OPERATION_GUIDE.md)** - 完整的操作说明
 - **[系统介绍](BIOAST_SYSTEM_INTRODUCTION.md)** - 完整系统架构介绍
 
+## 🚀 FUA - Flexible Unified Architecture
+
+FUA 是本项目的高级架构层，提供了统一的模型管理和训练框架。
+
+### 已完成功能
+
+#### Sprint 1: 核心基础设施 ✅
+- 完整的接口定义和数据结构
+- 配置管理系统
+- 基础架构组件
+
+#### Sprint 2: 模型集成系统 ✅
+- 模型适配器框架
+- 自动配置生成
+- 与 bioastModel 深度集成
+- 支持 AirBubble_HybridNet、MIC_MobileNetV3、Micro-ViT
+- 71/71 集成测试通过
+
+### 规划中功能
+
+#### Sprint 3: 生产化部署 📋
+- ONNX 导出和推理优化
+- 自动化训练管道
+- 高级优化功能
+- 监控和日志系统
+
+### 使用 FUA
+
+```python
+import fua
+
+# 创建模型管理器
+model_manager = fua.ModelManager()
+
+# 创建模型
+model_id = model_manager.create_model('airbubble_hybrid_net', {
+    'learning_rate': 0.001,
+    'batch_size': 32
+})
+
+# 训练模型
+training_results = model_manager.train_model(model_id, {
+    'samples': 1000,
+    'image_size': [70, 70]
+})
+
+# 评估模型
+eval_results = model_manager.evaluate_model(model_id, {
+    'samples': 200
+})
+```
+
+了解更多：[FUA 开发文档](docs/fua_sprint3_plan.md)
+
 ## 🤝 贡献
 
 欢迎提交Issue和Pull Request来改进这个工具集。
