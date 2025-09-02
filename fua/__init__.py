@@ -30,12 +30,38 @@ except ImportError:
 
 # Pipeline components (Sprint 3)
 try:
-    from .pipeline.data_processor import BioAstDataProcessor, create_data_processor
+    from .pipeline.data_processor import (
+        BioAstDataProcessor, create_data_processor, DataPipeline, 
+        ProcessingMode, QualityLevel, ProcessingResult, DatasetStats
+    )
     PIPELINE_AVAILABLE = True
 except ImportError:
     PIPELINE_AVAILABLE = False
     BioAstDataProcessor = None
     create_data_processor = None
+    DataPipeline = None
+    ProcessingMode = None
+    QualityLevel = None
+    ProcessingResult = None
+    DatasetStats = None
+
+# Optimization components (Sprint 3)
+try:
+    from .optimization.hyperparameter_optimizer import (
+        HyperparameterOptimizer, CrossValidationOptimizer, OptimizationResult,
+        TrialResult, create_hyperparameter_optimizer, create_cv_optimizer,
+        get_default_search_space
+    )
+    OPTIMIZATION_AVAILABLE = True
+except ImportError:
+    OPTIMIZATION_AVAILABLE = False
+    HyperparameterOptimizer = None
+    CrossValidationOptimizer = None
+    OptimizationResult = None
+    TrialResult = None
+    create_hyperparameter_optimizer = None
+    create_cv_optimizer = None
+    get_default_search_space = None
 
 __all__ = [
     # Core
@@ -65,7 +91,21 @@ __all__ = [
     # Pipeline
     'BioAstDataProcessor',
     'create_data_processor',
+    'DataPipeline',
+    'ProcessingMode',
+    'QualityLevel',
+    'ProcessingResult',
+    'DatasetStats',
+    # Optimization
+    'HyperparameterOptimizer',
+    'CrossValidationOptimizer',
+    'OptimizationResult',
+    'TrialResult',
+    'create_hyperparameter_optimizer',
+    'create_cv_optimizer',
+    'get_default_search_space',
     # Flags
     'DEPLOYMENT_AVAILABLE',
-    'PIPELINE_AVAILABLE'
+    'PIPELINE_AVAILABLE',
+    'OPTIMIZATION_AVAILABLE'
 ]

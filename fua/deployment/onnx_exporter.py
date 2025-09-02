@@ -205,7 +205,7 @@ class ONNXExporter:
                 quantize_dynamic(
                     model_path,
                     model_fp16_path,
-                    weight_type=QuantType.QUInt8
+                    weight_type=QuantType.QFloat16  # 修正：使用 QFloat16 而不是 QUInt8
                 )
                 # 替换原文件
                 Path(model_fp16_path).replace(model_path)
@@ -217,7 +217,7 @@ class ONNXExporter:
                 quantize_dynamic(
                     model_path,
                     model_int8_path,
-                    weight_type=QuantType.QUInt8
+                    weight_type=QuantType.QInt8
                 )
                 # 替换原文件
                 Path(model_int8_path).replace(model_path)
@@ -359,6 +359,160 @@ class ONNXExporter:
         except Exception as e:
             logger.error(f"获取模型信息失败: {e}")
             return {'error': str(e)}
+    
+    def compare_export_options(self, 
+                              model: Union[ModelInterface, ModelAdapter, torch.nn.Module],
+                              base_path: str,
+                              input_shape: tuple = (1, 3, 70, 70)) -> Dict[str, Dict[str, Any]]:
+        """比较不同导出选项的效果
+        
+        Args:
+            model: 要导出的模型
+            base_path: 基础路径（不带扩展名）
+            input_shape: 输入形状
+            
+        Returns:
+            Dict: 各种配置的结果比较
+        """
+        logger.info("开始比较不同导出选项...")
+        
+        results = {}
+        
+        # 测试所有优化级别和量化组合
+        test_configs = [
+            ('basic', None),
+            ('intermediate', None),
+            ('advanced', None),
+            ('basic', 'fp16'),
+            ('advanced', 'fp16'),
+            ('basic', 'int8'),
+            ('advanced', 'int8'),
+        ]
+        
+        base_model_size = None
+        
+        for opt_level, quant in test_configs:
+            config_name = f"{opt_level}"
+            if quant:
+                config_name += f"_{quant}"
+            
+            save_path = f"{base_path}_{config_name}.onnx"
+            
+            logger.info(f"测试配置: {config_name}")
+            
+            # 导出模型
+            success = self.export_model(
+                model,
+                save_path,
+                input_shape=input_shape,
+                optimization_level=opt_level,
+                quantization=quant
+            )
+            
+            if success:
+                # 获取模型信息
+                info = self.get_model_info(save_path)
+                
+                # 计算压缩率
+                if base_model_size is None:
+                    # 找到基础模型（basic, 无量化）
+                    basic_info = self.get_model_info(f"{base_path}_basic.onnx")
+                    base_model_size = basic_info.get('file_size_mb', 0)
+                
+                compression_ratio = base_model_size / info.get('file_size_mb', 1) if info.get('file_size_mb', 0) > 0 else 1
+                
+                results[config_name] = {
+                    'success': True,
+                    'file_size_mb': info.get('file_size_mb', 0),
+                    'compression_ratio': compression_ratio,
+                    'size_reduction_percent': (1 - 1/compression_ratio) * 100 if compression_ratio > 1 else 0,
+                    'avg_inference_time_ms': info.get('avg_inference_time_ms', 0),
+                    'throughput': info.get('throughput', 0),
+                    'optimization_level': opt_level,
+                    'quantization': quant
+                }
+                
+                logger.info(f"   ✓ 文件大小: {info.get('file_size_mb', 0):.2f} MB "
+                           f"({(1 - 1/compression_ratio) * 100 if compression_ratio > 1 else 0:+.1f}%)")
+            else:
+                results[config_name] = {
+                    'success': False,
+                    'error': 'Export failed'
+                }
+                logger.error(f"   ✗ 导出失败")
+        
+        # 生成比较报告
+        self._generate_comparison_report(results, f"{base_path}_comparison_report.json")
+        
+        return results
+    
+    def _generate_comparison_report(self, results: Dict[str, Dict[str, Any]], output_path: str):
+        """生成比较报告"""
+        import json
+        
+        # 计算统计信息
+        successful_results = {k: v for k, v in results.items() if v['success']}
+        
+        if successful_results:
+            # 找到最佳配置
+            best_size = min(successful_results.items(), key=lambda x: x[1]['file_size_mb'])
+            best_speed = max(successful_results.items(), key=lambda x: x[1]['throughput'])
+            
+            report = {
+                'summary': {
+                    'total_configs': len(results),
+                    'successful_exports': len(successful_results),
+                    'best_size_config': best_size[0],
+                    'best_speed_config': best_speed[0],
+                    'smallest_size_mb': best_size[1]['file_size_mb'],
+                    'highest_throughput': best_speed[1]['throughput']
+                },
+                'detailed_results': results,
+                'recommendations': self._generate_recommendations(successful_results)
+            }
+            
+            # 保存报告
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(report, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"比较报告已保存到: {output_path}")
+    
+    def _generate_recommendations(self, results: Dict[str, Dict[str, Any]]) -> List[str]:
+        """生成优化建议"""
+        recommendations = []
+        
+        if not results:
+            return ["没有成功的导出结果"]
+        
+        # 分析不同配置的优势
+        size_configs = sorted(results.items(), key=lambda x: x[1]['file_size_mb'])
+        speed_configs = sorted(results.items(), key=lambda x: x[1]['throughput'], reverse=True)
+        
+        # 文件大小建议
+        if size_configs:
+            smallest = size_configs[0]
+            recommendations.append(
+                f"最小文件大小: {smallest[0]} ({smallest[1]['file_size_mb']:.2f} MB, "
+                f"压缩 {smallest[1]['size_reduction_percent']:+.1f}%)"
+            )
+        
+        # 速度建议
+        if speed_configs:
+            fastest = speed_configs[0]
+            recommendations.append(
+                f"最高吞吐量: {fastest[0]} ({fastest[1]['throughput']:.1f} 推理/秒)"
+            )
+        
+        # 平衡建议
+        balanced_candidates = [r for r in results.values() 
+                            if r['file_size_mb'] < np.mean([v['file_size_mb'] for v in results.values()]) 
+                            and r['throughput'] > np.mean([v['throughput'] for v in results.values()])]
+        
+        if balanced_candidates:
+            best_balanced = min(balanced_candidates, key=lambda x: x['file_size_mb'] / x['throughput'])
+            recommendations.append("建议使用平衡配置以获得最佳性价比")
+        
+        return recommendations
 
 
 # 工厂函数
