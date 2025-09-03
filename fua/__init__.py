@@ -178,6 +178,21 @@ except ImportError:
     WebhookNotifier = None
     create_model_monitor = None
 
+# Experiment Tracking components (Sprint 9)
+try:
+    from .experiment_tracking.mlflow_integration import (
+        FUAExperimentTracker, FUAModelRegistry, FUAMLflowIntegration,
+        create_mlflow_integration, start_mlflow_ui
+    )
+    EXPERIMENT_TRACKING_AVAILABLE = True
+except ImportError:
+    EXPERIMENT_TRACKING_AVAILABLE = False
+    FUAExperimentTracker = None
+    FUAModelRegistry = None
+    FUAMLflowIntegration = None
+    create_mlflow_integration = None
+    start_mlflow_ui = None
+
 __all__ = [
     # Core
     'ModelCapabilities',
@@ -310,6 +325,12 @@ __all__ = [
     'SlackNotifier',
     'WebhookNotifier',
     'create_model_monitor',
+    # Experiment Tracking
+    'FUAExperimentTracker',
+    'FUAModelRegistry',
+    'FUAMLflowIntegration',
+    'create_mlflow_integration',
+    'start_mlflow_ui',
     # Flags
     'DEPLOYMENT_AVAILABLE',
     'PIPELINE_AVAILABLE',
@@ -317,5 +338,6 @@ __all__ = [
     'FINETUNING_AVAILABLE',
     'AUTOMATION_AVAILABLE',
     'MODEL_INTEGRATION_AVAILABLE',
-    'PRODUCTION_AVAILABLE'
+    'PRODUCTION_AVAILABLE',
+    'EXPERIMENT_TRACKING_AVAILABLE'
 ]
