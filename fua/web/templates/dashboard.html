@@ -1,0 +1,142 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Dashboard</h2>
+    
+    <!-- Dashboard Summary -->
+    <div id="dashboard-summary" class="metrics-grid mb-4">
+        <div class="text-center">
+            <div class="loading-spinner"></div>
+            <p class="text-muted mt-2">Loading dashboard data...</p>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="chart-container">
+                <h5>Recent Experiments</h5>
+                <canvas id="experiments-chart" height="300"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-container">
+                <h5>Success Rate</h5>
+                <canvas id="success-rate-chart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Experiments -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Experiments</h5>
+                    <a href="/experiments" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Run Name</th>
+                                    <th>Status</th>
+                                    <th>Start Time</th>
+                                    <th>Accuracy</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-experiments">
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        <div class="loading-spinner"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Monitoring -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">System Monitoring</h5>
+                </div>
+                <div class="card-body" id="monitoring-metrics">
+                    <div class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="text-muted mt-2">Loading monitoring data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize charts when dashboard loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+});
+
+function initializeCharts() {
+    // Initialize experiments chart
+    const expCtx = document.getElementById('experiments-chart');
+    if (expCtx) {
+        new Chart(expCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Experiments',
+                    data: [12, 19, 15, 25, 22, 30, 28],
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+    
+    // Initialize success rate chart
+    const successCtx = document.getElementById('success-rate-chart');
+    if (successCtx) {
+        new Chart(successCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Success', 'Failed', 'Running'],
+                datasets: [{
+                    data: [75, 15, 10],
+                    backgroundColor: [
+                        'rgb(75, 192, 192)',
+                        'rgb(255, 99, 132)',
+                        'rgb(255, 205, 86)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
