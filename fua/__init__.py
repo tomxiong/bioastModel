@@ -63,63 +63,120 @@ except ImportError:
     create_cv_optimizer = None
     get_default_search_space = None
 
-# Fine-tuning components (Sprint 4)
+# Automation Engine components (Sprint 5)
 try:
-    from .finetuning.layered_lr_scheduler import (
-        LayeredLRScheduler, DifferentialLearningRateFinder,
-        create_layered_scheduler, create_lr_finder,
-        get_resnet_layer_groups, get_vit_layer_groups, get_efficientnet_layer_groups
+    from .automation.automation_engine import (
+        AutomationEngine, AutomationResult, AutomationStatus,
+        create_automation_engine
     )
-    from .finetuning.loss_function_factory import (
-        LossFunctionFactory, create_loss, register_custom_loss,
-        get_classification_loss_configs, get_imbalanced_loss_configs,
-        get_metric_learning_loss_configs, get_segmentation_loss_configs
+    from .automation.error_detector import (
+        ErrorDetector, ErrorCategory, ErrorSeverity,
+        create_error_detector
     )
-    from .finetuning.architecture_modifier import (
-        ArchitectureModifier, create_architecture_modifier
+    from .automation.root_cause_analyzer import (
+        RootCauseAnalyzer, AnalysisResult, AnalysisConfidence,
+        create_root_cause_analyzer
     )
-    from .finetuning.finetuning_monitor import (
-        FineTuningMonitor, TrainingMetrics, GradientMonitor, ActivationMonitor,
-        create_finetuning_monitor
+    from .automation.improvement_generator import (
+        ImprovementGenerator, ImprovementType, ImprovementPriority,
+        create_improvement_generator
     )
-    from .finetuning.advanced_finetuner import (
-        FineTuningConfig, FineTuningResult, AdvancedFineTuner,
-        create_advanced_finetuner, get_default_finetuning_config
+    from .automation.fast_validator import (
+        FastValidator, ValidationResult, ValidationLevel,
+        create_fast_validator
     )
-    FINETUNING_AVAILABLE = True
+    AUTOMATION_AVAILABLE = True
 except ImportError:
-    FINETUNING_AVAILABLE = False
-    # Layered LR Scheduler
-    LayeredLRScheduler = None
-    DifferentialLearningRateFinder = None
-    create_layered_scheduler = None
-    create_lr_finder = None
-    get_resnet_layer_groups = None
-    get_vit_layer_groups = None
-    get_efficientnet_layer_groups = None
-    # Loss Function Factory
-    LossFunctionFactory = None
-    create_loss = None
-    register_custom_loss = None
-    get_classification_loss_configs = None
-    get_imbalanced_loss_configs = None
-    get_metric_learning_loss_configs = None
-    get_segmentation_loss_configs = None
-    # Architecture Modifier
-    ArchitectureModifier = None
-    create_architecture_modifier = None
-    # Fine-tuning Monitor
-    FineTuningMonitor = None
-    TrainingMetrics = None
-    GradientMonitor = None
-    ActivationMonitor = None
-    create_finetuning_monitor = None
-    # Advanced Fine-tuner
-    FineTuningConfig = None
-    FineTuningResult = None
-    AdvancedFineTuner = None
-    create_advanced_finetuner = None
-    get_default_finetuning_config = None
+    AUTOMATION_AVAILABLE = False
+    AutomationEngine = None
+    AutomationResult = None
+    AutomationStatus = None
+    create_automation_engine = None
+    ErrorDetector = None
+    ErrorCategory = None
+    ErrorSeverity = None
+    create_error_detector = None
+    RootCauseAnalyzer = None
+    AnalysisResult = None
+    AnalysisConfidence = None
+    create_root_cause_analyzer = None
+    ImprovementGenerator = None
+    ImprovementType = None
+    ImprovementPriority = None
+    create_improvement_generator = None
+    FastValidator = None
+    ValidationResult = None
+    ValidationLevel = None
+    create_fast_validator = None
+
+# Model Integration components (Sprint 6)
+try:
+    from .model_integration import (
+        ModelIntegrator, ModelEvaluator, ModelSelector, ModelDeployer,
+        ModelMetadata, ModelFormat, ModelStatus, EvaluationResult, EvaluationMetrics,
+        BenchmarkSuite, EvaluationType, SelectionCriteria, SelectionStrategy,
+        SelectionResult, SelectionWeights, SelectionConstraint,
+        DeploymentConfig, DeploymentResult, DeploymentStatus, DeploymentPlatform,
+        DeploymentFormat, OptimizationLevel, DeploymentMetrics,
+        create_model_integrator, create_model_evaluator, create_model_selector,
+        create_model_deployer
+    )
+    MODEL_INTEGRATION_AVAILABLE = True
+except ImportError:
+    MODEL_INTEGRATION_AVAILABLE = False
+    ModelIntegrator = None
+    ModelEvaluator = None
+    ModelSelector = None
+    ModelDeployer = None
+    ModelMetadata = None
+    ModelFormat = None
+    ModelStatus = None
+    EvaluationResult = None
+    EvaluationMetrics = None
+    BenchmarkSuite = None
+    EvaluationType = None
+    SelectionCriteria = None
+    SelectionStrategy = None
+    SelectionResult = None
+    SelectionWeights = None
+    SelectionConstraint = None
+    DeploymentConfig = None
+    DeploymentResult = None
+    DeploymentStatus = None
+    DeploymentPlatform = None
+    DeploymentFormat = None
+    OptimizationLevel = None
+    DeploymentMetrics = None
+    create_model_integrator = None
+    create_model_evaluator = None
+    create_model_selector = None
+    create_model_deployer = None
+
+# Production components (Sprint 7)
+try:
+    from .production import (
+        ModelMonitor, MetricsCollector, AnomalyDetector, AlertManager,
+        Alert, AlertSeverity, MetricType, AlertChannel, MetricThreshold,
+        ModelMetrics, EmailNotifier, SlackNotifier, WebhookNotifier,
+        create_model_monitor
+    )
+    PRODUCTION_AVAILABLE = True
+except ImportError:
+    PRODUCTION_AVAILABLE = False
+    ModelMonitor = None
+    MetricsCollector = None
+    AnomalyDetector = None
+    AlertManager = None
+    Alert = None
+    AlertSeverity = None
+    MetricType = None
+    AlertChannel = None
+    MetricThreshold = None
+    ModelMetrics = None
+    EmailNotifier = None
+    SlackNotifier = None
+    WebhookNotifier = None
+    create_model_monitor = None
 
 __all__ = [
     # Core
@@ -189,9 +246,76 @@ __all__ = [
     'AdvancedFineTuner',
     'create_advanced_finetuner',
     'get_default_finetuning_config',
+    # Automation Engine
+    'AutomationEngine',
+    'AutomationResult',
+    'AutomationStatus',
+    'create_automation_engine',
+    'ErrorDetector',
+    'ErrorCategory',
+    'ErrorSeverity',
+    'create_error_detector',
+    'RootCauseAnalyzer',
+    'AnalysisResult',
+    'AnalysisConfidence',
+    'create_root_cause_analyzer',
+    'ImprovementGenerator',
+    'ImprovementType',
+    'ImprovementPriority',
+    'create_improvement_generator',
+    'FastValidator',
+    'ValidationResult',
+    'ValidationLevel',
+    'create_fast_validator',
+    # Model Integration
+    'ModelIntegrator',
+    'ModelEvaluator',
+    'ModelSelector',
+    'ModelDeployer',
+    'ModelMetadata',
+    'ModelFormat',
+    'ModelStatus',
+    'EvaluationResult',
+    'EvaluationMetrics',
+    'BenchmarkSuite',
+    'EvaluationType',
+    'SelectionCriteria',
+    'SelectionStrategy',
+    'SelectionResult',
+    'SelectionWeights',
+    'SelectionConstraint',
+    'DeploymentConfig',
+    'DeploymentResult',
+    'DeploymentStatus',
+    'DeploymentPlatform',
+    'DeploymentFormat',
+    'OptimizationLevel',
+    'DeploymentMetrics',
+    'create_model_integrator',
+    'create_model_evaluator',
+    'create_model_selector',
+    'create_model_deployer',
+    # Production
+    'ModelMonitor',
+    'MetricsCollector',
+    'AnomalyDetector',
+    'AlertManager',
+    'Alert',
+    'AlertSeverity',
+    'MetricType',
+    'AlertChannel',
+    'MetricThreshold',
+    'ModelMetrics',
+    'EmailNotifier',
+    'SlackNotifier',
+    'WebhookNotifier',
+    'create_model_monitor',
     # Flags
     'DEPLOYMENT_AVAILABLE',
     'PIPELINE_AVAILABLE',
     'OPTIMIZATION_AVAILABLE',
-    'FINETUNING_AVAILABLE'
+    'FINETUNING_AVAILABLE',
+    'AUTOMATION_AVAILABLE',
+    'MODEL_INTEGRATION_AVAILABLE',
+    'PRODUCTION_AVAILABLE'
 ]
