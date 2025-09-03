@@ -32,6 +32,13 @@ from .auto_rollback import (
     create_auto_rollback_manager
 )
 
+from .distributed_monitor import (
+    DistributedModelMonitor, ClusterManager, DistributedMetricsCollector,
+    ClusterNode, NodeStatus, NodeRole, MonitoringTask, TaskScheduler,
+    DataAggregator, DistributedAlertManager, RoundRobinLoadBalancer,
+    create_distributed_monitor
+)
+
 __all__ = [
     # Model Monitor
     'ModelMonitor',
@@ -86,7 +93,21 @@ __all__ = [
     'ModelVersion',
     'RollbackPlan',
     'RollbackConfig',
-    'create_auto_rollback_manager'
+    'create_auto_rollback_manager',
+    
+    # Distributed Monitoring
+    'DistributedModelMonitor',
+    'ClusterManager',
+    'DistributedMetricsCollector',
+    'ClusterNode',
+    'NodeStatus',
+    'NodeRole',
+    'MonitoringTask',
+    'TaskScheduler',
+    'DataAggregator',
+    'DistributedAlertManager',
+    'RoundRobinLoadBalancer',
+    'create_distributed_monitor'
 ]
 
 # 模块版本
