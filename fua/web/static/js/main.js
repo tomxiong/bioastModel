@@ -152,6 +152,10 @@ async function loadDashboardData() {
         const metrics = await fetch('/api/monitoring/metrics').then(r => r.json());
         updateMonitoringMetrics(metrics);
         
+        // Load dataset statistics
+        const dataset = await fetch('/api/dataset').then(r => r.json());
+        updateDatasetStats(dataset);
+        
     } catch (error) {
         console.error('Failed to load dashboard data:', error);
     }
@@ -159,37 +163,121 @@ async function loadDashboardData() {
 
 // Update dashboard summary
 function updateDashboardSummary(summary) {
-    const container = document.getElementById('dashboard-summary');
-    if (!container) return;
+    // Update individual metric elements
+    updateMetric('summary-total-runs', summary.total_runs || 0);
+    updateMetric('summary-active-runs', summary.active_runs || 0);
+    updateMetric('summary-finished-runs', summary.finished_runs || 0);
+    updateMetric('summary-failed-runs', summary.failed_runs || 0);
     
-    container.innerHTML = `
-        <div class="row">
-            <div class="col-md-3">
-                <div class="metric-card">
-                    <div class="metric-label">Total Runs</div>
-                    <div class="metric-value text-primary">${summary.total_runs || 0}</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="metric-card">
-                    <div class="metric-label">Active Runs</div>
-                    <div class="metric-value text-info">${summary.active_runs || 0}</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="metric-card">
-                    <div class="metric-label">Completed</div>
-                    <div class="metric-value text-success">${summary.finished_runs || 0}</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="metric-card">
-                    <div class="metric-label">Failed</div>
-                    <div class="metric-value text-danger">${summary.failed_runs || 0}</div>
-                </div>
-            </div>
-        </div>
-    `;
+    // Update success rate chart and text
+    updateSuccessRate(summary);
+    
+    // Update experiments chart
+    updateExperimentsChart(summary);
+}
+
+// Update metric with animation
+function updateMetric(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        const currentValue = parseInt(element.textContent) || 0;
+        const newValue = parseInt(value) || 0;
+        
+        if (currentValue !== newValue) {
+            element.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                element.textContent = newValue;
+                element.style.transform = 'scale(1)';
+            }, 200);
+        }
+    }
+}
+
+// Update success rate visualization
+function updateSuccessRate(summary) {
+    const total = summary.total_runs || 0;
+    const finished = summary.finished_runs || 0;
+    const successRate = total > 0 ? Math.round((finished / total) * 100) : 0;
+    
+    // Update success rate text
+    const rateText = document.getElementById('success-rate-text');
+    if (rateText) {
+        rateText.textContent = `${successRate}%`;
+        rateText.className = `text-${successRate > 80 ? 'success' : successRate > 60 ? 'warning' : 'danger'}`;
+    }
+    
+    // Update success rate chart
+    const ctx = document.getElementById('success-rate-chart');
+    if (ctx) {
+        const failed = summary.failed_runs || 0;
+        const active = summary.active_runs || 0;
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['成功', '失败', '运行中'],
+                datasets: [{
+                    data: [finished, failed, active],
+                    backgroundColor: [
+                        'rgb(40, 167, 69)',
+                        'rgb(220, 53, 69)',
+                        'rgb(255, 193, 7)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Update experiments chart
+function updateExperimentsChart(summary) {
+    const ctx = document.getElementById('experiments-chart');
+    if (ctx) {
+        // Generate mock data for the last 7 days
+        const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        const data = days.map(() => Math.floor(Math.random() * 10));
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: days,
+                datasets: [{
+                    label: '实验数量',
+                    data: data,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
 }
 
 // Update recent experiments
@@ -221,35 +309,152 @@ function updateMonitoringMetrics(metrics) {
     const container = document.getElementById('monitoring-metrics');
     if (!container) return;
     
-    if (metrics.aggregated) {
-        const cpu = metrics.aggregated.cpu || {};
-        const memory = metrics.aggregated.memory || {};
+    if (metrics.nodes) {
+        const node = metrics.nodes[0] || {};
+        const cpuUsage = node.cpu_usage || 0;
+        const memoryUsage = node.memory_usage || 0;
         
         container.innerHTML = `
             <div class="row">
                 <div class="col-md-6">
-                    <div class="chart-container">
-                        <h5>CPU Usage</h5>
-                        <div class="progress" style="height: 30px;">
-                            <div class="progress-bar" role="progressbar" style="width: ${cpu.avg || 0}%">
-                                ${Math.round(cpu.avg || 0)}%
-                            </div>
+                    <h6>CPU 使用率</h6>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar ${cpuUsage > 80 ? 'bg-danger' : cpuUsage > 60 ? 'bg-warning' : 'bg-success'}" 
+                             role="progressbar" style="width: ${cpuUsage}%">
+                            ${Math.round(cpuUsage)}%
                         </div>
                     </div>
+                    <small class="text-muted">当前使用率</small>
                 </div>
                 <div class="col-md-6">
-                    <div class="chart-container">
-                        <h5>Memory Usage</h5>
-                        <div class="progress" style="height: 30px;">
-                            <div class="progress-bar bg-info" role="progressbar" style="width: ${memory.avg || 0}%">
-                                ${Math.round(memory.avg || 0)}%
-                            </div>
+                    <h6>内存使用率</h6>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar ${memoryUsage > 80 ? 'bg-danger' : memoryUsage > 60 ? 'bg-warning' : 'bg-info'}" 
+                             role="progressbar" style="width: ${memoryUsage}%">
+                            ${Math.round(memoryUsage)}%
                         </div>
+                    </div>
+                    <small class="text-muted">当前使用率</small>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <h5 class="text-primary">${metrics.active_nodes || 1}</h5>
+                        <p class="text-muted mb-0">活跃节点</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <h5 class="text-info">${metrics.running_tasks || 0}</h5>
+                        <p class="text-muted mb-0">运行任务</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <h5 class="text-success">${metrics.system_status === 'healthy' ? '正常' : '异常'}</h5>
+                        <p class="text-muted mb-0">系统状态</p>
                     </div>
                 </div>
             </div>
         `;
     }
+}
+
+// Update dataset statistics
+function updateDatasetStats(dataset) {
+    const container = document.getElementById('dataset-stats');
+    if (!container) return;
+    
+    const stats = dataset.stats || {};
+    const total = stats.total || 0;
+    
+    container.innerHTML = `
+        <div class="row">
+            <div class="col-md-8">
+                <canvas id="dataset-distribution-chart" height="200"></canvas>
+            </div>
+            <div class="col-md-4">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h5 class="text-primary">${stats.train?.positive || 0}</h5>
+                            <p class="text-muted mb-0">训练正样本</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h5 class="text-danger">${stats.train?.negative || 0}</h5>
+                            <p class="text-muted mb-0">训练负样本</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h5 class="text-info">${stats.val?.positive || 0}</h5>
+                            <p class="text-muted mb-0">验证正样本</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h5 class="text-warning">${stats.val?.negative || 0}</h5>
+                            <p class="text-muted mb-0">验证负样本</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12 text-center">
+                        <h4 class="text-success">${total}</h4>
+                        <p class="text-muted mb-0">总样本数</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Initialize dataset distribution chart
+    setTimeout(() => {
+        const ctx = document.getElementById('dataset-distribution-chart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['训练集', '验证集', '测试集'],
+                    datasets: [{
+                        label: '正样本',
+                        data: [
+                            stats.train?.positive || 0,
+                            stats.val?.positive || 0,
+                            stats.test?.positive || 0
+                        ],
+                        backgroundColor: 'rgba(40, 167, 69, 0.8)'
+                    }, {
+                        label: '负样本',
+                        data: [
+                            stats.train?.negative || 0,
+                            stats.val?.negative || 0,
+                            stats.test?.negative || 0
+                        ],
+                        backgroundColor: 'rgba(220, 53, 69, 0.8)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    }, 100);
 }
 
 // Experiments page initialization

@@ -2,13 +2,35 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4">Dashboard</h2>
+    <h2 class="mb-4">仪表板</h2>
     
-    <!-- Dashboard Summary -->
+    <!-- 仪表板摘要 -->
     <div id="dashboard-summary" class="metrics-grid mb-4">
-        <div class="text-center">
-            <div class="loading-spinner"></div>
-            <p class="text-muted mt-2">Loading dashboard data...</p>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">总运行次数</div>
+                    <div class="metric-value text-primary" id="summary-total-runs">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">运行中</div>
+                    <div class="metric-value text-info" id="summary-active-runs">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">已完成</div>
+                    <div class="metric-value text-success" id="summary-finished-runs">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">失败</div>
+                    <div class="metric-value text-danger" id="summary-failed-runs">0</div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -16,36 +38,40 @@
     <div class="row mb-4">
         <div class="col-md-8">
             <div class="chart-container">
-                <h5>Recent Experiments</h5>
+                <h5>最近实验</h5>
                 <canvas id="experiments-chart" height="300"></canvas>
             </div>
         </div>
         <div class="col-md-4">
             <div class="chart-container">
-                <h5>Success Rate</h5>
+                <h5>实验成功率</h5>
                 <canvas id="success-rate-chart" height="300"></canvas>
+                <div class="text-center mt-2">
+                    <h3 class="text-success" id="success-rate-text">0%</h3>
+                    <p class="text-muted">整体成功率</p>
+                </div>
             </div>
         </div>
     </div>
     
-    <!-- Recent Experiments -->
+    <!-- 最近实验 -->
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Recent Experiments</h5>
-                    <a href="/experiments" class="btn btn-sm btn-outline-primary">View All</a>
+                    <h5 class="mb-0">最近实验</h5>
+                    <a href="/experiments" class="btn btn-sm btn-outline-primary">查看全部</a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Run Name</th>
-                                    <th>Status</th>
-                                    <th>Start Time</th>
-                                    <th>Accuracy</th>
-                                    <th>Actions</th>
+                                    <th>运行名称</th>
+                                    <th>状态</th>
+                                    <th>开始时间</th>
+                                    <th>准确率</th>
+                                    <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody id="recent-experiments">
@@ -56,6 +82,24 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 数据集统计 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">数据集统计</h5>
+                    <a href="/dataset" class="btn btn-sm btn-outline-primary">管理数据集</a>
+                </div>
+                <div class="card-body" id="dataset-stats">
+                    <div class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="text-muted mt-2">加载数据集统计中...</p>
                     </div>
                 </div>
             </div>

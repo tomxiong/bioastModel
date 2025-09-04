@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}数据集管理 - FUA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">数据集管理</h1>
+        <div>
+            <button class="btn btn-primary" onclick="refreshDataset()">
+                <i class="fas fa-sync-alt"></i> 刷新
+            </button>
+            <button class="btn btn-success" onclick="showUploadModal()">
+                <i class="fas fa-upload"></i> 上传数据
+            </button>
+        </div>
+    </div>
+
+    <!-- 数据集概览 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">总图片数</h5>
+                    <h2 id="total-images">-</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">训练集</h5>
+                    <h2 id="train-count">-</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">验证集</h5>
+                    <h2 id="val-count">-</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">测试集</h5>
+                    <h2 id="test-count">-</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据集结构 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">数据集结构</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <h6>训练集</h6>
+                    <div class="border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>阴性样本</span>
+                            <span class="badge bg-secondary" id="train-negative">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>阳性样本</span>
+                            <span class="badge bg-primary" id="train-positive">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h6>验证集</h6>
+                    <div class="border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>阴性样本</span>
+                            <span class="badge bg-secondary" id="val-negative">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>阳性样本</span>
+                            <span class="badge bg-primary" id="val-positive">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h6>测试集</h6>
+                    <div class="border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>阴性样本</span>
+                            <span class="badge bg-secondary" id="test-negative">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>阳性样本</span>
+                            <span class="badge bg-primary" id="test-positive">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据集预览 -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">数据预览</h5>
+            <div>
+                <select class="form-select form-select-sm d-inline-block w-auto me-2" id="preview-split" onchange="updatePreview()">
+                    <option value="train">训练集</option>
+                    <option value="val">验证集</option>
+                    <option value="test">测试集</option>
+                </select>
+                <select class="form-select form-select-sm d-inline-block w-auto" id="preview-category" onchange="updatePreview()">
+                    <option value="positive">阳性样本</option>
+                    <option value="negative">阴性样本</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="image-preview" class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 上传数据模态框 -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">上传数据集</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="upload-form">
+                    <div class="mb-3">
+                        <label class="form-label">数据集类型</label>
+                        <select class="form-select" id="dataset-type">
+                            <option value="train">训练集</option>
+                            <option value="val">验证集</option>
+                            <option value="test">测试集</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">类别</label>
+                        <select class="form-select" id="dataset-category">
+                            <option value="positive">阳性样本</option>
+                            <option value="negative">阴性样本</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">选择文件</label>
+                        <input type="file" class="form-control" id="dataset-files" multiple accept="image/*">
+                        <div class="form-text">支持 JPG、PNG、JPEG 格式</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="uploadDataset()">上传</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 全局变量
+let datasetStats = null;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadDatasetInfo();
+    // 每30秒自动刷新
+    setInterval(loadDatasetInfo, 30000);
+});
+
+// 加载数据集信息
+function loadDatasetInfo() {
+    fetch('/api/dataset')
+        .then(response => response.json())
+        .then(data => {
+            if (data.stats) {
+                datasetStats = data.stats;
+                updateDatasetDisplay(data.stats);
+                updatePreview();
+            } else {
+                showError('加载数据集信息失败');
+            }
+        })
+        .catch(error => {
+            showError('网络错误: ' + error.message);
+        });
+}
+
+// 更新数据集显示
+function updateDatasetDisplay(stats) {
+    // 更新总数
+    document.getElementById('total-images').textContent = stats.total;
+    
+    // 更新各数据集数量
+    const trainCount = stats.train.negative + stats.train.positive;
+    const valCount = stats.val.negative + stats.val.positive;
+    const testCount = stats.test.negative + stats.test.positive;
+    
+    document.getElementById('train-count').textContent = trainCount;
+    document.getElementById('val-count').textContent = valCount;
+    document.getElementById('test-count').textContent = testCount;
+    
+    // 更新详细统计
+    document.getElementById('train-negative').textContent = stats.train.negative;
+    document.getElementById('train-positive').textContent = stats.train.positive;
+    document.getElementById('val-negative').textContent = stats.val.negative;
+    document.getElementById('val-positive').textContent = stats.val.positive;
+    document.getElementById('test-negative').textContent = stats.test.negative;
+    document.getElementById('test-positive').textContent = stats.test.positive;
+}
+
+// 更新预览
+function updatePreview() {
+    if (!datasetStats) return;
+    
+    const split = document.getElementById('preview-split').value;
+    const category = document.getElementById('preview-category').value;
+    const previewContainer = document.getElementById('image-preview');
+    
+    // 模拟图片预览
+    const count = datasetStats[split][category];
+    if (count === 0) {
+        previewContainer.innerHTML = '<div class="text-muted">该类别暂无图片</div>';
+        return;
+    }
+    
+    // 生成预览图片（实际应用中应该显示真实图片）
+    let html = '<div class="row">';
+    for (let i = 0; i < Math.min(6, count); i++) {
+        html += `
+            <div class="col-md-2 col-sm-4 mb-3">
+                <div class="card">
+                    <img src="https://via.placeholder.com/150x150?text=Image+${i+1}" 
+                         class="card-img-top" alt="预览图片">
+                    <div class="card-body p-2">
+                        <p class="card-text small text-center mb-0">图片 ${i+1}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    html += '</div>';
+    
+    if (count > 6) {
+        html += `<div class="text-muted mt-2">还有 ${count - 6} 张图片...</div>`;
+    }
+    
+    previewContainer.innerHTML = html;
+}
+
+// 刷新数据集
+function refreshDataset() {
+    loadDatasetInfo();
+}
+
+// 显示上传模态框
+function showUploadModal() {
+    new bootstrap.Modal(document.getElementById('uploadModal')).show();
+}
+
+// 上传数据集
+function uploadDataset() {
+    const files = document.getElementById('dataset-files').files;
+    if (files.length === 0) {
+        alert('请选择要上传的文件');
+        return;
+    }
+    
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+    formData.append('type', document.getElementById('dataset-type').value);
+    formData.append('category', document.getElementById('dataset-category').value);
+    
+    // 显示上传中状态
+    const uploadBtn = event.target;
+    const originalText = uploadBtn.innerHTML;
+    uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>上传中...';
+    uploadBtn.disabled = true;
+    
+    fetch('/api/dataset/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('上传失败: ' + data.error);
+        } else {
+            alert(`上传成功！\n已上传 ${data.files.length} 个文件`);
+            // 关闭模态框
+            bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+            // 刷新数据集信息
+            loadDatasetInfo();
+        }
+    })
+    .catch(error => {
+        alert('网络错误: ' + error.message);
+    })
+    .finally(() => {
+        uploadBtn.innerHTML = originalText;
+        uploadBtn.disabled = false;
+    });
+}
+
+// 显示错误
+function showError(message) {
+    const container = document.getElementById('image-preview');
+    container.innerHTML = `<div class="alert alert-danger">${message}</div>`;
+}
+</script>
+{% endblock %}

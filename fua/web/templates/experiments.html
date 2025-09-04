@@ -3,13 +3,16 @@
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Experiments</h2>
+        <h2>实验管理</h2>
         <div>
             <button class="btn btn-primary" onclick="refreshExperiments()">
-                <i class="fas fa-sync-alt"></i> Refresh
+                <i class="fas fa-sync-alt"></i> 刷新
+            </button>
+            <button class="btn btn-info" id="compare-selected-btn" onclick="compareSelectedExperiments()" disabled>
+                <i class="fas fa-balance-scale"></i> 比较选中 (0)
             </button>
             <button class="btn btn-success" onclick="createNewExperiment()">
-                <i class="fas fa-plus"></i> New Experiment
+                <i class="fas fa-plus"></i> 新建实验
             </button>
         </div>
     </div>
@@ -19,34 +22,34 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-3">
-                    <label class="form-label">Status</label>
+                    <label class="form-label">状态</label>
                     <select class="form-select" id="status-filter" onchange="filterExperiments()">
-                        <option value="">All Status</option>
-                        <option value="RUNNING">Running</option>
-                        <option value="FINISHED">Finished</option>
-                        <option value="FAILED">Failed</option>
+                        <option value="">全部状态</option>
+                        <option value="RUNNING">运行中</option>
+                        <option value="FINISHED">已完成</option>
+                        <option value="FAILED">失败</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Date Range</label>
+                    <label class="form-label">时间范围</label>
                     <select class="form-select" id="date-filter" onchange="filterExperiments()">
-                        <option value="">All Time</option>
-                        <option value="today">Today</option>
-                        <option value="week">Last 7 Days</option>
-                        <option value="month">Last 30 Days</option>
+                        <option value="">全部时间</option>
+                        <option value="today">今天</option>
+                        <option value="week">最近7天</option>
+                        <option value="month">最近30天</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Sort By</label>
+                    <label class="form-label">排序方式</label>
                     <select class="form-select" id="sort-filter" onchange="filterExperiments()">
-                        <option value="start_time">Start Time</option>
-                        <option value="run_name">Name</option>
-                        <option value="status">Status</option>
+                        <option value="start_time">开始时间</option>
+                        <option value="run_name">名称</option>
+                        <option value="status">状态</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Search</label>
-                    <input type="text" class="form-control" id="search-input" placeholder="Search experiments..." onkeyup="filterExperiments()">
+                    <label class="form-label">搜索</label>
+                    <input type="text" class="form-control" id="search-input" placeholder="搜索实验..." onkeyup="filterExperiments()">
                 </div>
             </div>
         </div>
@@ -73,7 +76,7 @@
                         <tr>
                             <td colspan="8" class="text-center">
                                 <div class="loading-spinner"></div>
-                                <p class="text-muted mt-2">Loading experiments...</p>
+                                <p class="text-muted mt-2">加载实验中...</p>
                             </td>
                         </tr>
                     </tbody>
@@ -95,15 +98,15 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Experiment Details</h5>
+                <h5 class="modal-title">实验详情</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="experiment-details">
                 <!-- Details will be loaded dynamically -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="exportExperimentResults()">Export Results</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="exportExperimentResults()">导出结果</button>
             </div>
         </div>
     </div>
@@ -208,9 +211,9 @@ function renderExperimentsTable() {
         const bestMetric = getBestMetric(exp.metrics);
         
         return `
-            <tr>
+            <tr data-run-id="${exp.run_id}">
                 <td><code>${exp.run_id.substring(0, 8)}</code></td>
-                <td>${exp.run_name || 'Unnamed'}</td>
+                <td>${exp.run_name || '未命名'}</td>
                 <td><span class="badge bg-${getStatusColor(exp.status)}">${exp.status}</span></td>
                 <td>${exp.start_time ? formatDateTime(exp.start_time) : 'N/A'}</td>
                 <td>${exp.end_time ? formatDateTime(exp.end_time) : '-'}</td>
@@ -218,13 +221,13 @@ function renderExperimentsTable() {
                 <td>${bestMetric}</td>
                 <td>
                     <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewExperimentDetails('${exp.run_id}')" title="View Details">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewExperimentDetails('${exp.run_id}')" title="查看详情">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-success" onclick="compareExperiment('${exp.run_id}')" title="Compare">
+                        <button class="btn btn-sm btn-outline-success" onclick="compareExperiment('${exp.run_id}')" title="比较">
                             <i class="fas fa-balance-scale"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteExperiment('${exp.run_id}')" title="Delete">
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteExperiment('${exp.run_id}')" title="删除">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -321,42 +324,53 @@ async function submitNewExperiment() {
     };
     
     try {
-        // This would be an API call to create the experiment
-        // const response = await fetch('/api/experiments', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(experimentData)
-        // });
+        const response = await fetch('/api/experiments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(experimentData)
+        });
         
-        showAlert('Experiment created successfully', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('newExperimentModal')).hide();
-        loadExperiments();
+        const result = await response.json();
+        
+        if (response.ok) {
+            showAlert('实验创建成功', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('newExperimentModal')).hide();
+            loadExperiments();
+        } else {
+            showAlert(`创建失败: ${result.error}`, 'danger');
+        }
     } catch (error) {
         console.error('Failed to create experiment:', error);
-        showAlert('Failed to create experiment', 'danger');
+        showAlert('创建实验失败', 'danger');
     }
 }
 
 // View experiment details
 async function viewExperimentDetails(runId) {
     try {
-        const experiment = experimentsData.find(exp => exp.run_id === runId);
-        if (!experiment) return;
+        // Fetch detailed experiment data
+        const response = await fetch(`/api/experiments/${runId}`);
+        const experiment = await response.json();
+        
+        if (!response.ok) {
+            showAlert(`加载失败: ${experiment.error}`, 'danger');
+            return;
+        }
         
         const detailsHtml = `
             <div class="row">
                 <div class="col-md-6">
-                    <h6>Run Information</h6>
+                    <h6>实验信息</h6>
                     <table class="table table-sm">
                         <tr><td><strong>Run ID:</strong></td><td><code>${experiment.run_id}</code></td></tr>
-                        <tr><td><strong>Name:</strong></td><td>${experiment.run_name || 'N/A'}</td></tr>
-                        <tr><td><strong>Status:</strong></td><td><span class="badge bg-${getStatusColor(experiment.status)}">${experiment.status}</span></td></tr>
-                        <tr><td><strong>Start Time:</strong></td><td>${formatDateTime(experiment.start_time)}</td></tr>
-                        <tr><td><strong>End Time:</strong></td><td>${experiment.end_time ? formatDateTime(experiment.end_time) : 'N/A'}</td></tr>
+                        <tr><td><strong>名称:</strong></td><td>${experiment.run_name || 'N/A'}</td></tr>
+                        <tr><td><strong>状态:</strong></td><td><span class="badge bg-${getStatusColor(experiment.status)}">${experiment.status}</span></td></tr>
+                        <tr><td><strong>开始时间:</strong></td><td>${formatDateTime(experiment.start_time)}</td></tr>
+                        <tr><td><strong>结束时间:</strong></td><td>${experiment.end_time ? formatDateTime(experiment.end_time) : 'N/A'}</td></tr>
                     </table>
                 </div>
                 <div class="col-md-6">
-                    <h6>Parameters</h6>
+                    <h6>参数</h6>
                     <div class="table-responsive">
                         <table class="table table-sm">
                             ${formatParams(experiment.params)}
@@ -366,7 +380,7 @@ async function viewExperimentDetails(runId) {
             </div>
             <div class="row mt-3">
                 <div class="col-12">
-                    <h6>Metrics</h6>
+                    <h6>指标</h6>
                     <div class="row">
                         ${formatMetricsCards(experiment.metrics)}
                     </div>
@@ -374,10 +388,22 @@ async function viewExperimentDetails(runId) {
             </div>
             <div class="row mt-3">
                 <div class="col-12">
-                    <h6>Performance Chart</h6>
+                    <h6>性能图表</h6>
                     <canvas id="metrics-chart" height="200"></canvas>
                 </div>
             </div>
+            ${experiment.tags && Object.keys(experiment.tags).length > 0 ? `
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6>标签</h6>
+                    <div>
+                        ${Object.entries(experiment.tags).map(([key, value]) => 
+                            `<span class="badge bg-secondary me-1">${key}: ${value}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            </div>
+            ` : ''}
         `;
         
         document.getElementById('experiment-details').innerHTML = detailsHtml;
@@ -390,7 +416,7 @@ async function viewExperimentDetails(runId) {
         
     } catch (error) {
         console.error('Failed to view experiment details:', error);
-        showAlert('Failed to load experiment details', 'danger');
+        showAlert('加载实验详情失败', 'danger');
     }
 }
 
@@ -528,18 +554,200 @@ function goToPage(page) {
     console.log('Going to page:', page);
 }
 
+let selectedExperiments = new Set();
+
 function compareExperiment(runId) {
-    showAlert('Compare feature coming soon', 'info');
+    // Toggle experiment selection
+    if (selectedExperiments.has(runId)) {
+        selectedExperiments.delete(runId);
+        document.querySelector(`tr[data-run-id="${runId}"]`).classList.remove('table-active');
+    } else {
+        selectedExperiments.add(runId);
+        document.querySelector(`tr[data-run-id="${runId}"]`).classList.add('table-active');
+    }
+    
+    // Update compare button
+    const compareBtn = document.getElementById('compare-selected-btn');
+    if (compareBtn) {
+        compareBtn.textContent = `比较选中 (${selectedExperiments.size})`;
+        compareBtn.disabled = selectedExperiments.size < 2;
+    }
 }
 
-function deleteExperiment(runId) {
-    if (confirm('Are you sure you want to delete this experiment?')) {
-        showAlert('Delete feature coming soon', 'info');
+async function compareSelectedExperiments() {
+    if (selectedExperiments.size < 2) {
+        showAlert('请至少选择2个实验进行比较', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/experiments/compare', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ run_ids: Array.from(selectedExperiments) })
+        });
+        
+        const comparison = await response.json();
+        
+        if (response.ok) {
+            showComparisonModal(comparison);
+        } else {
+            showAlert(`比较失败: ${comparison.error}`, 'danger');
+        }
+    } catch (error) {
+        console.error('Failed to compare experiments:', error);
+        showAlert('比较实验失败', 'danger');
+    }
+}
+
+function showComparisonModal(comparison) {
+    const modalHtml = `
+        <div class="modal fade" id="comparisonModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">实验比较</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${formatComparisonTable(comparison)}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" onclick="exportComparison()">导出结果</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal
+    const existingModal = document.getElementById('comparisonModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add new modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('comparisonModal'));
+    modal.show();
+}
+
+function formatComparisonTable(comparison) {
+    let html = '<div class="table-responsive">';
+    
+    // Metrics comparison
+    if (Object.keys(comparison.metrics_comparison).length > 0) {
+        html += '<h6>指标对比</h6>';
+        html += '<table class="table table-striped">';
+        html += '<thead><tr><th>指标</th>';
+        
+        comparison.experiments.forEach(exp => {
+            html += `<th>${exp.run_name || exp.run_id.substring(0, 8)}</th>`;
+        });
+        
+        html += '</tr></thead><tbody>';
+        
+        Object.entries(comparison.metrics_comparison).forEach(([metric, values]) => {
+            html += '<tr>';
+            html += `<td><strong>${metric}</strong></td>`;
+            
+            comparison.experiments.forEach(exp => {
+                const value = values[exp.run_id];
+                html += `<td>${value !== null ? (typeof value === 'number' ? value.toFixed(4) : value) : 'N/A'}</td>`;
+            });
+            
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+async function deleteExperiment(runId) {
+    if (confirm('确定要删除这个实验吗？此操作不可撤销。')) {
+        try {
+            const response = await fetch(`/api/experiments/${runId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showAlert('实验已标记为删除', 'success');
+                loadExperiments();
+            } else {
+                showAlert(`删除失败: ${result.error}`, 'danger');
+            }
+        } catch (error) {
+            console.error('Failed to delete experiment:', error);
+            showAlert('删除实验失败', 'danger');
+        }
     }
 }
 
 function exportExperimentResults() {
-    showAlert('Export feature coming soon', 'info');
+    // Get current experiment data from modal
+    const runId = document.querySelector('#experimentModal').dataset.runId;
+    if (!runId) return;
+    
+    const experiment = experimentsData.find(exp => exp.run_id === runId);
+    if (!experiment) return;
+    
+    // Create export data
+    const exportData = {
+        run_id: experiment.run_id,
+        run_name: experiment.run_name,
+        status: experiment.status,
+        start_time: experiment.start_time,
+        end_time: experiment.end_time,
+        metrics: experiment.metrics,
+        params: experiment.params,
+        exported_at: new Date().toISOString()
+    };
+    
+    // Create and download file
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `experiment_${experiment.run_id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showAlert('实验结果已导出', 'success');
+}
+
+function exportComparison() {
+    // Get comparison data
+    const selectedExps = Array.from(selectedExperiments).map(id => 
+        experimentsData.find(exp => exp.run_id === id)
+    ).filter(Boolean);
+    
+    const exportData = {
+        experiments: selectedExps,
+        comparison_date: new Date().toISOString()
+    };
+    
+    // Create and download file
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `experiment_comparison_${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showAlert('比较结果已导出', 'success');
 }
 </script>
 {% endblock %}

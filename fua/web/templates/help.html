@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}使用指南 - FUA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">使用指南</h1>
+        <div>
+            <button class="btn btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> 打印指南
+            </button>
+            <button class="btn btn-outline-secondary" onclick="downloadGuide()">
+                <i class="fas fa-download"></i> 下载PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- 功能概述 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-info-circle text-primary"></i> 系统概述
+            </h5>
+        </div>
+        <div class="card-body">
+            <p>FUA（统一分析框架）是一个企业级MLOps平台，提供完整的机器学习模型生命周期管理功能。系统集成了实验跟踪、模型管理、系统监控和数据集管理等功能。</p>
+            <div class="row mt-3">
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <i class="fas fa-flask fa-3x text-primary mb-2"></i>
+                        <h6>实验管理</h6>
+                        <p class="small text-muted">跟踪和管理ML实验</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <i class="fas fa-brain fa-3x text-info mb-2"></i>
+                        <h6>模型管理</h6>
+                        <p class="small text-muted">注册和版本化管理</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <i class="fas fa-chart-line fa-3x text-success mb-2"></i>
+                        <h6>系统监控</h6>
+                        <p class="small text-muted">实时监控和告警</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <i class="fas fa-database fa-3x text-warning mb-2"></i>
+                        <h6>数据集管理</h6>
+                        <p class="small text-muted">数据上传和统计</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能详情 -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- 实验管理 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-flask text-primary"></i> 实验管理
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>功能说明</h6>
+                    <ul>
+                        <li>实验跟踪：记录每次实验的参数、指标和结果</li>
+                        <li>版本对比：比较不同实验的性能表现</li>
+                        <li>结果可视化：展示训练过程中的指标变化</li>
+                        <li>实验导出：导出实验结果用于分析</li>
+                    </ul>
+                    
+                    <h6>使用方法</h6>
+                    <ol>
+                        <li>访问"实验管理"页面</li>
+                        <li>点击"新建实验"创建实验</li>
+                        <li>配置实验参数并启动训练</li>
+                        <li>实时查看实验进度和结果</li>
+                        <li>使用筛选和排序功能管理实验</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- 模型管理 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-brain text-info"></i> 模型管理
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>功能说明</h6>
+                    <ul>
+                        <li>模型注册：将训练好的模型注册到系统</li>
+                        <li>版本控制：管理模型的不同版本</li>
+                        <li>阶段管理：支持开发、测试、生产等阶段</li>
+                        <li>模型部署：一键部署模型到生产环境</li>
+                    </ul>
+                    
+                    <h6>使用方法</h6>
+                    <ol>
+                        <li>访问"模型管理"页面</li>
+                        <li>查看已注册的模型列表</li>
+                        <li>点击模型名称查看详细信息</li>
+                        <li>使用搜索和筛选功能查找模型</li>
+                        <li>管理模型版本和部署状态</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- 系统监控 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line text-success"></i> 系统监控
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>功能说明</h6>
+                    <ul>
+                        <li>实时监控：监控系统运行状态和性能</li>
+                        <li>资源使用：监控CPU、内存、磁盘使用情况</li>
+                        <li>告警机制：异常情况自动告警</li>
+                        <li>历史记录：查看历史监控数据</li>
+                    </ul>
+                    
+                    <h6>使用方法</h6>
+                    <ol>
+                        <li>访问"系统监控"页面</li>
+                        <li>查看系统概览和实时状态</li>
+                        <li>监控各个节点的运行情况</li>
+                        <li>查看详细的性能指标</li>
+                        <li>设置告警规则和通知</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- 数据集管理 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-database text-warning"></i> 数据集管理
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>功能说明</h6>
+                    <ul>
+                        <li>数据上传：支持批量上传训练数据</li>
+                        <li>数据统计：自动统计数据集信息</li>
+                        <li>数据预览：在线预览数据样本</li>
+                        <li>数据版本：管理数据集的不同版本</li>
+                    </ul>
+                    
+                    <h6>使用方法</h6>
+                    <ol>
+                        <li>访问"数据集"页面</li>
+                        <li>查看当前数据集统计信息</li>
+                        <li>点击"上传数据"添加新数据</li>
+                        <li>选择数据类型和类别</li>
+                        <li>上传文件并查看结果</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 侧边栏 -->
+        <div class="col-lg-4">
+            <!-- 快速开始 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">快速开始</h6>
+                </div>
+                <div class="card-body">
+                    <ol class="small">
+                        <li><a href="/dataset" class="text-decoration-none">上传数据集</a></li>
+                        <li><a href="/experiments" class="text-decoration-none">创建实验</a></li>
+                        <li><a href="/models" class="text-decoration-none">注册模型</a></li>
+                        <li><a href="/monitoring" class="text-decoration-none">监控系统</a></li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- 常见问题 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">常见问题</h6>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h6 class="accordion-header" id="headingOne">
+                                <button class="accordion-button collapsed btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                    如何上传数据集？
+                                </button>
+                            </h6>
+                            <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body small">
+                                    访问"数据集"页面，点击"上传数据"按钮，选择数据类型和类别，然后选择要上传的文件。
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h6 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                    实验失败怎么办？
+                                </button>
+                            </h6>
+                            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body small">
+                                    查看实验日志了解失败原因，检查参数配置和数据格式，修改后重新运行实验。
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h6 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                    如何部署模型？
+                                </button>
+                            </h6>
+                            <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body small">
+                                    在"模型管理"页面选择要部署的模型版本，点击"部署"按钮，选择部署环境并确认。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 联系支持 -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">技术支持</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-2">如需技术支持，请联系：</p>
+                    <ul class="small mb-0">
+                        <li>邮箱：support@fua-framework.com</li>
+                        <li>文档：<a href="#">在线文档</a></li>
+                        <li>社区：<a href="#">用户论坛</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 下载指南
+function downloadGuide() {
+    alert('PDF下载功能开发中...');
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 添加平滑滚动
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
