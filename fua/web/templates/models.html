@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block title %}模型管理 - FUA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">模型管理</h1>
+        <div>
+            <button class="btn btn-primary" onclick="refreshModels()">
+                <i class="fas fa-sync-alt"></i> 刷新
+            </button>
+            <button class="btn btn-success" onclick="showRegisterModelModal()">
+                <i class="fas fa-plus"></i> 注册模型
+            </button>
+        </div>
+    </div>
+
+    <!-- 模型统计 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">总模型数</h5>
+                    <h2 id="total-models">-</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">生产模型</h5>
+                    <h2 id="production-models">-</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">暂存模型</h5>
+                    <h2 id="staging-models">-</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">存档模型</h5>
+                    <h2 id="archived-models">-</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 筛选和搜索 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="model-search" placeholder="搜索模型...">
+                        <button class="btn btn-outline-secondary" type="button" onclick="searchModels()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="stage-filter" onchange="filterModels()">
+                        <option value="">所有阶段</option>
+                        <option value="Production">生产</option>
+                        <option value="Staging">暂存</option>
+                        <option value="Archived">存档</option>
+                        <option value="None">未注册</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="sort-by" onchange="sortModels()">
+                        <option value="updated">最后更新</option>
+                        <option value="created">创建时间</option>
+                        <option value="name">名称</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="sort-order" onchange="sortModels()">
+                        <option value="desc">降序</option>
+                        <option value="asc">升序</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模型列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div id="models-container">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 模型详情模态框 -->
+<div class="modal fade" id="modelDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">模型详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="model-detail-content">
+                <!-- 模型详情内容 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="downloadModel()">下载模型</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 注册模型模态框 -->
+<div class="modal fade" id="registerModelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">注册新模型</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="register-model-form">
+                    <div class="mb-3">
+                        <label class="form-label">模型名称</label>
+                        <input type="text" class="form-control" id="model-name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">描述</label>
+                        <textarea class="form-control" id="model-description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">模型文件</label>
+                        <input type="file" class="form-control" id="model-file" accept=".pth,.onnx,.pkl">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">标签</label>
+                        <input type="text" class="form-control" id="model-tags" placeholder="用逗号分隔">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="registerModel()">注册</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 全局变量
+let models = [];
+let currentModel = null;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadModels();
+    // 每30秒自动刷新
+    setInterval(loadModels, 30000);
+});
+
+// 加载模型列表
+function loadModels() {
+    fetch('/api/models')
+        .then(response => response.json())
+        .then(data => {
+            if (data.models) {
+                models = data.models;
+                displayModels(models);
+                updateStatistics(models);
+            } else {
+                showError('加载模型失败: ' + (data.error || '未知错误'));
+            }
+        })
+        .catch(error => {
+            showError('网络错误: ' + error.message);
+        });
+}
+
+// 显示模型列表
+function displayModels(modelsToShow) {
+    const container = document.getElementById('models-container');
+    
+    if (modelsToShow.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted">暂无模型</div>';
+        return;
+    }
+    
+    let html = '<div class="table-responsive"><table class="table table-hover">';
+    html += '<thead><tr><th>名称</th><th>最新版本</th><th>阶段</th><th>状态</th><th>最后更新</th><th>操作</th></tr></thead>';
+    html += '<tbody>';
+    
+    modelsToShow.forEach(model => {
+        const latestVersion = model.latest_version || {};
+        const stage = latestVersion.stage || 'None';
+        const status = latestVersion.status || 'Unknown';
+        
+        html += '<tr>';
+        html += `<td><strong>${model.name}</strong></td>`;
+        html += `<td>v${latestVersion.version || '-'}</td>`;
+        html += `<td><span class="badge bg-${getStageColor(stage)}">${stage}</span></td>`;
+        html += `<td><span class="badge bg-${getStatusColor(status)}">${status}</span></td>`;
+        html += `<td>${formatDate(model.last_updated_timestamp)}</td>`;
+        html += '<td>';
+        html += `<button class="btn btn-sm btn-outline-primary" onclick="showModelDetail('${model.name}')">详情</button> `;
+        html += `<button class="btn btn-sm btn-outline-secondary" onclick="showModelVersions('${model.name}')">版本</button>`;
+        html += '</td>';
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+// 更新统计信息
+function updateStatistics(modelsList) {
+    const stats = {
+        total: modelsList.length,
+        production: 0,
+        staging: 0,
+        archived: 0
+    };
+    
+    modelsList.forEach(model => {
+        const stage = model.latest_version?.stage || 'None';
+        if (stage === 'Production') stats.production++;
+        else if (stage === 'Staging') stats.staging++;
+        else if (stage === 'Archived') stats.archived++;
+    });
+    
+    document.getElementById('total-models').textContent = stats.total;
+    document.getElementById('production-models').textContent = stats.production;
+    document.getElementById('staging-models').textContent = stats.staging;
+    document.getElementById('archived-models').textContent = stats.archived;
+}
+
+// 显示模型详情
+function showModelDetail(modelName) {
+    const model = models.find(m => m.name === modelName);
+    if (!model) return;
+    
+    currentModel = model;
+    const content = document.getElementById('model-detail-content');
+    
+    let html = `<h4>${model.name}</h4>`;
+    html += `<p><strong>描述:</strong> ${model.description || '无'}</p>`;
+    html += `<p><strong>创建时间:</strong> ${formatDate(model.creation_timestamp)}</p>`;
+    html += `<p><strong>最后更新:</strong> ${formatDate(model.last_updated_timestamp)}</p>`;
+    
+    if (model.latest_version) {
+        html += '<h5>最新版本</h5>';
+        html += `<p><strong>版本:</strong> v${model.latest_version.version}</p>`;
+        html += `<p><strong>阶段:</strong> ${model.latest_version.stage}</p>`;
+        html += `<p><strong>状态:</strong> ${model.latest_version.status}</p>`;
+        html += `<p><strong>运行ID:</strong> ${model.latest_version.run_id}</p>`;
+    }
+    
+    content.innerHTML = html;
+    new bootstrap.Modal(document.getElementById('modelDetailModal')).show();
+}
+
+// 刷新模型列表
+function refreshModels() {
+    loadModels();
+}
+
+// 搜索模型
+function searchModels() {
+    const searchTerm = document.getElementById('model-search').value.toLowerCase();
+    const filtered = models.filter(m => m.name.toLowerCase().includes(searchTerm));
+    displayModels(filtered);
+}
+
+// 筛选模型
+function filterModels() {
+    const stage = document.getElementById('stage-filter').value;
+    let filtered = models;
+    
+    if (stage) {
+        filtered = models.filter(m => {
+            const modelStage = m.latest_version?.stage || 'None';
+            return modelStage === stage;
+        });
+    }
+    
+    displayModels(filtered);
+}
+
+// 排序模型
+function sortModels() {
+    const sortBy = document.getElementById('sort-by').value;
+    const sortOrder = document.getElementById('sort-order').value;
+    
+    const sorted = [...models].sort((a, b) => {
+        let aVal, bVal;
+        
+        if (sortBy === 'name') {
+            aVal = a.name;
+            bVal = b.name;
+        } else if (sortBy === 'created') {
+            aVal = new Date(a.creation_timestamp);
+            bVal = new Date(b.creation_timestamp);
+        } else {
+            aVal = new Date(a.last_updated_timestamp);
+            bVal = new Date(b.last_updated_timestamp);
+        }
+        
+        if (sortOrder === 'asc') {
+            return aVal > bVal ? 1 : -1;
+        } else {
+            return aVal < bVal ? 1 : -1;
+        }
+    });
+    
+    displayModels(sorted);
+}
+
+// 显示注册模型模态框
+function showRegisterModelModal() {
+    new bootstrap.Modal(document.getElementById('registerModelModal')).show();
+}
+
+// 注册模型
+function registerModel() {
+    // 实现注册逻辑
+    alert('注册功能待实现');
+}
+
+// 下载模型
+function downloadModel() {
+    if (!currentModel) return;
+    // 实现下载逻辑
+    alert('下载功能待实现');
+}
+
+// 显示模型版本
+function showModelVersions(modelName) {
+    // 实现版本历史显示
+    alert('版本历史功能待实现');
+}
+
+// 辅助函数
+function getStageColor(stage) {
+    const colors = {
+        'Production': 'success',
+        'Staging': 'warning',
+        'Archived': 'secondary',
+        'None': 'light'
+    };
+    return colors[stage] || 'light';
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'READY': 'success',
+        'FAILED': 'danger',
+        'PENDING': 'warning',
+        'RUNNING': 'info'
+    };
+    return colors[status] || 'secondary';
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleString('zh-CN');
+}
+
+function showError(message) {
+    // 简单的错误显示
+    const container = document.getElementById('models-container');
+    container.innerHTML = `<div class="alert alert-danger">${message}</div>`;
+}
+</script>
+{% endblock %}

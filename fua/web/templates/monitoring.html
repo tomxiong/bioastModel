@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+
+{% block title %}系统监控 - FUA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">系统监控</h1>
+        <div>
+            <button class="btn btn-primary" onclick="refreshMonitoring()">
+                <i class="fas fa-sync-alt"></i> 刷新
+            </button>
+            <button class="btn btn-success" onclick="exportMetrics()">
+                <i class="fas fa-download"></i> 导出
+            </button>
+        </div>
+    </div>
+
+    <!-- 系统状态概览 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">系统状态</h5>
+                    <h2 id="system-status">
+                        <i class="fas fa-circle text-success"></i> 正常
+                    </h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">活跃节点</h5>
+                    <h2 id="active-nodes">-</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">运行任务</h5>
+                    <h2 id="running-tasks">-</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">CPU使用率</h5>
+                    <h2 id="cpu-usage">-%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 资源使用图表 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">CPU使用率</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="cpuChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">内存使用率</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="memoryChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 节点状态 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">节点状态</h5>
+        </div>
+        <div class="card-body">
+            <div id="nodes-container">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模型监控 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">模型监控</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <select class="form-select" id="model-select" onchange="loadModelMetrics()">
+                        <option value="">选择模型...</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" id="version-select" onchange="loadModelMetrics()">
+                        <option value="">选择版本...</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" id="metric-select" onchange="updateMetricChart()">
+                        <option value="accuracy">准确率</option>
+                        <option value="loss">损失</option>
+                        <option value="latency">延迟</option>
+                        <option value="throughput">吞吐量</option>
+                    </select>
+                </div>
+            </div>
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="modelMetricChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 告警日志 -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">告警日志</h5>
+        </div>
+        <div class="card-body">
+            <div id="alerts-container">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 告警详情模态框 -->
+<div class="modal fade" id="alertDetailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">告警详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="alert-detail-content">
+                <!-- 告警详情内容 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-danger" onclick="dismissAlert()">忽略</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 全局变量
+let cpuChart = null;
+let memoryChart = null;
+let modelMetricChart = null;
+let monitoringData = null;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadMonitoringData();
+    // 每10秒自动刷新
+    setInterval(loadMonitoringData, 10000);
+});
+
+// 初始化图表
+function initializeCharts() {
+    // CPU使用率图表
+    const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+    cpuChart = new Chart(cpuCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'CPU使用率 (%)',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // 内存使用率图表
+    const memoryCtx = document.getElementById('memoryChart').getContext('2d');
+    memoryChart = new Chart(memoryCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: '内存使用率 (%)',
+                data: [],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // 模型指标图表
+    const modelMetricCtx = document.getElementById('modelMetricChart').getContext('2d');
+    modelMetricChart = new Chart(modelMetricCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: '模型指标',
+                data: [],
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+// 加载监控数据
+function loadMonitoringData() {
+    // 加载系统指标
+    fetch('/api/monitoring/metrics')
+        .then(response => response.json())
+        .then(data => {
+            monitoringData = data;
+            updateSystemOverview(data);
+            updateResourceCharts(data);
+            displayNodes(data.nodes || []);
+            displayAlerts(data.alerts || []);
+        })
+        .catch(error => {
+            console.error('Failed to load monitoring data:', error);
+        });
+
+    // 加载模型列表
+    fetch('/api/models')
+        .then(response => response.json())
+        .then(data => {
+            if (data.models) {
+                updateModelSelect(data.models);
+            }
+        })
+        .catch(error => {
+            console.error('Failed to load models:', error);
+        });
+}
+
+// 更新系统概览
+function updateSystemOverview(data) {
+    const systemStatus = data.system_status || 'unknown';
+    const statusIcon = systemStatus === 'healthy' ? 'success' : 'danger';
+    const statusText = systemStatus === 'healthy' ? '正常' : '异常';
+    
+    document.getElementById('system-status').innerHTML = 
+        `<i class="fas fa-circle text-${statusIcon}"></i> ${statusText}`;
+    
+    document.getElementById('active-nodes').textContent = data.active_nodes || 0;
+    document.getElementById('running-tasks').textContent = data.running_tasks || 0;
+    document.getElementById('cpu-usage').textContent = 
+        (data.cpu_usage || 0).toFixed(1) + '%';
+}
+
+// 更新资源图表
+function updateResourceCharts(data) {
+    const now = new Date().toLocaleTimeString('zh-CN');
+    
+    // 更新CPU图表
+    updateChart(cpuChart, now, data.cpu_usage || 0);
+    
+    // 更新内存图表
+    updateChart(memoryChart, now, data.memory_usage || 0);
+}
+
+// 更新单个图表
+function updateChart(chart, label, value) {
+    chart.data.labels.push(label);
+    chart.data.datasets[0].data.push(value);
+    
+    // 保持最近20个数据点
+    if (chart.data.labels.length > 20) {
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+    }
+    
+    chart.update();
+}
+
+// 显示节点状态
+function displayNodes(nodes) {
+    const container = document.getElementById('nodes-container');
+    
+    if (nodes.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted">暂无节点信息</div>';
+        return;
+    }
+    
+    let html = '<div class="table-responsive"><table class="table">';
+    html += '<thead><tr><th>节点ID</th><th>主机</th><th>角色</th><th>状态</th><th>CPU</th><th>内存</th><th>最后心跳</th></tr></thead>';
+    html += '<tbody>';
+    
+    nodes.forEach(node => {
+        const statusColor = node.status === 'active' ? 'success' : 'danger';
+        const statusText = node.status === 'active' ? '活跃' : '离线';
+        
+        html += '<tr>';
+        html += `<td>${node.id}</td>`;
+        html += `<td>${node.host}:${node.port}</td>`;
+        html += `<td><span class="badge bg-info">${node.role}</span></td>`;
+        html += `<td><span class="badge bg-${statusColor}">${statusText}</span></td>`;
+        html += `<td>${(node.cpu_usage || 0).toFixed(1)}%</td>`;
+        html += `<td>${(node.memory_usage || 0).toFixed(1)}%</td>`;
+        html += `<td>${formatDate(node.last_heartbeat)}</td>`;
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+// 显示告警日志
+function displayAlerts(alerts) {
+    const container = document.getElementById('alerts-container');
+    
+    if (alerts.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted">暂无告警</div>';
+        return;
+    }
+    
+    let html = '<div class="list-group">';
+    
+    alerts.slice(0, 10).forEach(alert => {
+        const severityClass = getSeverityClass(alert.severity);
+        html += `<div class="list-group-item list-group-item-action" onclick="showAlertDetail('${alert.id}')">`;
+        html += `<div class="d-flex w-100 justify-content-between">`;
+        html += `<h6 class="mb-1"><span class="badge bg-${severityClass}">${alert.severity}</span> ${alert.title}</h6>`;
+        html += `<small>${formatDate(alert.timestamp)}</small>`;
+        html += `</div>`;
+        html += `<p class="mb-1">${alert.message}</p>`;
+        html += `</div>`;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// 更新模型选择器
+function updateModelSelect(models) {
+    const select = document.getElementById('model-select');
+    select.innerHTML = '<option value="">选择模型...</option>';
+    
+    models.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model.name;
+        option.textContent = model.name;
+        select.appendChild(option);
+    });
+}
+
+// 加载模型指标
+function loadModelMetrics() {
+    const modelId = document.getElementById('model-select').value;
+    const versionId = document.getElementById('version-select').value;
+    
+    if (!modelId) return;
+    
+    // 这里应该调用获取模型指标的API
+    console.log('Loading metrics for model:', modelId, 'version:', versionId);
+}
+
+// 更新指标图表
+function updateMetricChart() {
+    // 模拟数据
+    const labels = ['1', '2', '3', '4', '5'];
+    const data = [0.8, 0.85, 0.82, 0.88, 0.9];
+    
+    modelMetricChart.data.labels = labels;
+    modelMetricChart.data.datasets[0].data = data;
+    modelMetricChart.update();
+}
+
+// 显示告警详情
+function showAlertDetail(alertId) {
+    // 实现显示告警详情的逻辑
+    console.log('Showing alert detail:', alertId);
+}
+
+// 忽略告警
+function dismissAlert() {
+    // 实现忽略告警的逻辑
+    bootstrap.Modal.getInstance(document.getElementById('alertDetailModal')).hide();
+}
+
+// 刷新监控数据
+function refreshMonitoring() {
+    loadMonitoringData();
+}
+
+// 导出指标
+function exportMetrics() {
+    // 实现导出功能
+    alert('导出功能待实现');
+}
+
+// 辅助函数
+function getSeverityClass(severity) {
+    const classes = {
+        'critical': 'danger',
+        'warning': 'warning',
+        'info': 'info'
+    };
+    return classes[severity] || 'secondary';
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleString('zh-CN');
+}
+</script>
+{% endblock %}
