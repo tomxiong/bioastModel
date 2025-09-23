@@ -107,6 +107,69 @@ TRAINING_CONFIGS = {
         'step_size': 2,
         'gamma': 0.5,
         'description': 'Quick test configuration for debugging'
+    },
+    
+    'mic_mobilenetv3_optimized': {
+        'batch_size': 64,
+        'learning_rate': 0.0008,
+        'weight_decay': 5e-4,
+        'num_epochs': 100,
+        'optimizer': 'adamw',
+        'scheduler': 'cosine_with_restarts',
+        'warmup_epochs': 10,
+        'warmup_factor': 0.1,
+        'label_smoothing': 0.1,
+        'mixup_alpha': 0.3,
+        'cutmix_alpha': 0.8,
+        'dropout_rate': 0.2,
+        'focal_loss': True,
+        'focal_alpha': 0.75,
+        'focal_gamma': 2.0,
+        'auxiliary_loss': True,
+        'auxiliary_weight': 0.3,
+        'multitask_weights': {
+            'classification': 1.0,
+            'bubble_detection': 0.3,
+            'turbidity': 0.2,
+            'quality': 0.1
+        },
+        'class_weights': [0.6, 0.4],  # Adjusted for class imbalance
+        'gradient_clip_norm': 1.0,
+        'ema_decay': 0.9999,  # Exponential moving average
+        'description': 'Optimized configuration for Enhanced MIC MobileNetV3 with advanced training strategies'
+    },
+    
+    'enhanced_mic_mobilenetv3_optimized': {
+        'batch_size': 64,
+        'learning_rate': 0.0008,
+        'weight_decay': 5e-4,
+        'num_epochs': 120,
+        'optimizer': 'adamw',
+        'scheduler': 'cosine_with_restarts',
+        'warmup_epochs': 15,
+        'warmup_factor': 0.1,
+        'label_smoothing': 0.1,
+        'mixup_alpha': 0.3,
+        'cutmix_alpha': 0.8,
+        'dropout_rate': 0.2,
+        'focal_loss': True,
+        'focal_alpha': 0.75,
+        'focal_gamma': 2.0,
+        'auxiliary_loss': True,
+        'auxiliary_weight': 0.3,
+        'multitask_weights': {
+            'classification': 1.0,
+            'aux_classification': 0.5,
+            'bubble_detection': 0.3,
+            'turbidity': 0.2,
+            'quality': 0.1
+        },
+        'class_weights': [0.58, 0.42],  # Balanced for 446:321 ratio
+        'gradient_clip_norm': 1.0,
+        'ema_decay': 0.9999,
+        'use_swa': True,  # Stochastic Weight Averaging
+        'swa_start': 0.8,  # Start SWA at 80% of training
+        'description': 'Advanced optimized configuration for Enhanced MIC MobileNetV3 with state-of-the-art training techniques'
     }
 }
 
@@ -117,7 +180,9 @@ MODEL_CONFIG_MAPPING = {
     'resnet18_improved': 'resnet_optimized',
     'convnext_tiny': 'convnext_optimized',
     'coatnet': 'coatnet_optimized',
-    'vit_tiny': 'vit_optimized'
+    'vit_tiny': 'vit_optimized',
+    'mic_mobilenetv3': 'mic_mobilenetv3_optimized',
+    'enhanced_mic_mobilenetv3': 'enhanced_mic_mobilenetv3_optimized'
 }
 
 def get_training_config(config_name):

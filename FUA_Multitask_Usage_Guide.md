@@ -121,10 +121,23 @@ bioast_dataset_multitask/
 
 ### 3.3 可用模型
 
-- `multitask_airbubble_hybrid`: 基于AirBubble HybridNet
-- `multitask_resnet18`: 基于ResNet18
-- `multitask_efficientnet`: 基于EfficientNet-B0
-- `hierarchical_airbubble`: 分层多任务模型
+#### 标准多任务模型
+- `multitask_airbubble_hybrid`: 基于AirBubble HybridNet (98.02% 准确率)
+- `multitask_resnet18`: 基于ResNet18 (97.83% 准确率)
+- `multitask_efficientnet`: 基于EfficientNet-B0 (97.54% 准确率)
+
+#### MobileNetV3系列
+- `multitask_mobilenetv3_large`: 基于MobileNetV3-Large，高性能版本
+- `multitask_mobilenetv3_small`: 基于MobileNetV3-Small，轻量级版本
+- `multitask_mic_mobilenetv3`: MIC专用MobileNetV3，带气泡检测和浊度分析
+- `enhanced_multitask_mobilenetv3`: 增强版MobileNetV3，内置多任务优化
+
+#### EfficientNetV2系列
+- `multitask_efficientnet_v2_s`: 基于EfficientNetV2-S，最新架构
+- `multitask_efficientnet_v2_b0`: 基于EfficientNetV2-B0，平衡版本
+
+#### 分层模型
+- `hierarchical_airbubble`: 分层多任务模型，任务间有依赖关系
 
 ### 3.4 训练配置示例
 

@@ -96,6 +96,31 @@ MODEL_CONFIGS = {
         'base_config': 'efficientnet_b0',
         'features': ['bubble_detection', 'turbidity_analysis', 'multi_task']
     },
+    
+    'enhanced_mic_mobilenetv3': {
+        'name': 'enhanced_mic_mobilenetv3',
+        'class_name': 'EnhancedMIC_MobileNetV3',
+        'module_path': 'models.enhanced_mic_mobilenetv3',
+        'params_millions': 3.2,
+        'parameters': 3200000,  # Estimated with CBAM and enhancements
+        'input_size': 70,
+        'num_classes': 2,
+        'description': 'Enhanced MIC-specific MobileNetV3 with CBAM attention, advanced bubble detection, and improved training stability',
+        'color': 'darkgreen',  # For visualization
+        'architecture': 'enhanced_mobilenetv3_mic',
+        'created_date': '2025-09-19T15:30:00',
+        'base_config': 'mic_mobilenetv3',
+        'features': ['cbam_attention', 'advanced_bubble_detection', 'enhanced_turbidity', 'auxiliary_loss', 'multi_task'],
+        'improvements': [
+            'CBAM attention mechanism for better feature extraction',
+            'Multi-scale bubble detection with spatial attention',
+            'Enhanced turbidity analysis with dual-branch architecture',
+            'Auxiliary classification loss for better gradient flow',
+            'Improved training stability and regularization',
+            'Advanced loss functions (Focal Loss, Label Smoothing)',
+            'Support for modern training techniques (SWA, EMA)'
+        ]
+    },
     'micro_vit': {
         'name': 'micro_vit',
         'class_name': 'MicroViT',

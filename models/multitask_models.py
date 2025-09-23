@@ -13,6 +13,11 @@ import math
 from models.airbubble_hybrid_net import create_airbubble_hybrid_net
 from models.resnet_improved import create_resnet18_improved
 from models.efficientnet import create_efficientnet_b0
+from models.mobilenet_v3 import create_mobilenetv3_large, create_mobilenetv3_small
+from models.efficientnet_v2_multitask import create_efficientnet_v2_s, create_efficientnet_v2_b0
+from models.mic_mobilenetv3 import create_mic_mobilenetv3
+from models.enhanced_multitask_mobilenetv3 import create_enhanced_multitask_mobilenetv3
+from models.multitask_gray_colony_net import create_multitask_gray_colony_net
 
 
 class MultitaskHead(nn.Module):
@@ -167,6 +172,28 @@ class MultitaskBioastModel(nn.Module):
                 model.fc = nn.Identity()
         elif backbone_name == 'efficientnet_b0':
             model = create_efficientnet_b0(num_classes=1000)
+            if hasattr(model, 'classifier'):
+                model.classifier = nn.Identity()
+        elif backbone_name == 'mobilenetv3_large':
+            model = create_mobilenetv3_large(num_classes=1000)
+            if hasattr(model, 'classifier'):
+                model.classifier = nn.Identity()
+        elif backbone_name == 'mobilenetv3_small':
+            model = create_mobilenetv3_small(num_classes=1000)
+            if hasattr(model, 'classifier'):
+                model.classifier = nn.Identity()
+        elif backbone_name == 'efficientnet_v2_s':
+            model = create_efficientnet_v2_s(num_classes=1000)
+            if hasattr(model, 'classifier'):
+                model.classifier = nn.Identity()
+        elif backbone_name == 'efficientnet_v2_b0':
+            model = create_efficientnet_v2_b0(num_classes=1000)
+            if hasattr(model, 'classifier'):
+                model.classifier = nn.Identity()
+        elif backbone_name == 'mic_mobilenetv3':
+            # MIC MobileNetV3 has special handling
+            model = create_mic_mobilenetv3(num_classes=1000)
+            # Remove classification head but keep other outputs
             if hasattr(model, 'classifier'):
                 model.classifier = nn.Identity()
         else:
@@ -402,6 +429,13 @@ def create_multitask_model(model_type: str = 'standard',
             backbone_name=backbone_name,
             **kwargs
         )
+    elif model_type == 'enhanced':
+        # 特殊处理增强版多任务模型
+        from models.enhanced_multitask_mobilenetv3 import create_enhanced_multitask_mobilenetv3
+        return create_enhanced_multitask_mobilenetv3(**kwargs)
+    elif model_type == 'multitask_gray':
+        # 多任务灰度菌落检测网络
+        return create_multitask_gray_colony_net(**kwargs)
     else:
         raise ValueError(f"不支持的多任务模型类型: {model_type}")
 
@@ -432,10 +466,65 @@ MULTITASK_MODEL_CONFIGS = {
         'use_attention': True,
         'description': '基于EfficientNet-B0的多任务模型'
     },
+    'multitask_mobilenetv3_large': {
+        'model_type': 'standard',
+        'backbone_name': 'mobilenetv3_large',
+        'feature_dim': 1280,
+        'dropout_rate': 0.3,
+        'use_attention': True,
+        'description': '基于MobileNetV3-Large的多任务模型'
+    },
+    'multitask_mobilenetv3_small': {
+        'model_type': 'standard',
+        'backbone_name': 'mobilenetv3_small',
+        'feature_dim': 1024,
+        'dropout_rate': 0.2,
+        'use_attention': True,
+        'description': '基于MobileNetV3-Small的多任务模型'
+    },
+    'multitask_efficientnet_v2_s': {
+        'model_type': 'standard',
+        'backbone_name': 'efficientnet_v2_s',
+        'feature_dim': 1280,
+        'dropout_rate': 0.3,
+        'use_attention': True,
+        'description': '基于EfficientNetV2-S的多任务模型'
+    },
+    'multitask_efficientnet_v2_b0': {
+        'model_type': 'standard',
+        'backbone_name': 'efficientnet_v2_b0',
+        'feature_dim': 1280,
+        'dropout_rate': 0.3,
+        'use_attention': True,
+        'description': '基于EfficientNetV2-B0的多任务模型'
+    },
+    'multitask_mic_mobilenetv3': {
+        'model_type': 'standard',
+        'backbone_name': 'mic_mobilenetv3',
+        'feature_dim': 576,
+        'dropout_rate': 0.2,
+        'use_attention': True,
+        'description': '基于MIC MobileNetV3的多任务模型'
+    },
+    'enhanced_multitask_mobilenetv3': {
+        'model_type': 'enhanced',
+        'backbone_name': 'mobilenetv3_small',
+        'feature_dim': 576,
+        'dropout_rate': 0.2,
+        'use_attention': True,
+        'description': '增强版MobileNetV3多任务模型，内置多任务支持'
+    },
     'hierarchical_airbubble': {
         'model_type': 'hierarchical',
         'backbone_name': 'airbubble_hybrid_net',
         'description': '分层多任务AirBubble模型'
+    },
+    'multitask_gray_colony': {
+        'model_type': 'multitask_gray',
+        'feature_dim': 128,
+        'dropout_rate': 0.2,
+        'enable_background_filter': True,
+        'description': '多任务灰度菌落检测网络，专精于灰度图像的4层标注任务'
     }
 }
 

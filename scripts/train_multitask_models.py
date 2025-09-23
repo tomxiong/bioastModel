@@ -169,7 +169,10 @@ def main():
     # 模型参数
     parser.add_argument('--model_name', type=str, default='multitask_airbubble_hybrid',
                        choices=['multitask_airbubble_hybrid', 'multitask_resnet18', 
-                               'multitask_efficientnet', 'hierarchical_airbubble'],
+                               'multitask_efficientnet', 'hierarchical_airbubble',
+                               'multitask_mobilenetv3_large', 'multitask_mobilenetv3_small',
+                               'multitask_efficientnet_v2_s', 'multitask_efficientnet_v2_b0',
+                               'multitask_mic_mobilenetv3', 'enhanced_multitask_mobilenetv3'],
                        help='模型名称')
     
     # 训练参数
@@ -302,6 +305,54 @@ def run_multitask_experiments():
         {
             'name': 'efficientnet_multitask',
             'model_name': 'multitask_efficientnet',
+            'config': {
+                'annotation_file': 'bioast_dataset/annotations/multitask_annotations.json',
+                'image_root': 'bioast_dataset/images',
+                'epochs': 50,
+                'batch_size': 32,
+                'learning_rate': 1e-3,
+                'use_amp': True
+            }
+        },
+        {
+            'name': 'mobilenetv3_large_multitask',
+            'model_name': 'multitask_mobilenetv3_large',
+            'config': {
+                'annotation_file': 'bioast_dataset/annotations/multitask_annotations.json',
+                'image_root': 'bioast_dataset/images',
+                'epochs': 50,
+                'batch_size': 32,
+                'learning_rate': 1e-3,
+                'use_amp': True
+            }
+        },
+        {
+            'name': 'mobilenetv3_small_multitask',
+            'model_name': 'multitask_mobilenetv3_small',
+            'config': {
+                'annotation_file': 'bioast_dataset/annotations/multitask_annotations.json',
+                'image_root': 'bioast_dataset/images',
+                'epochs': 50,
+                'batch_size': 32,
+                'learning_rate': 1e-3,
+                'use_amp': True
+            }
+        },
+        {
+            'name': 'efficientnet_v2_s_multitask',
+            'model_name': 'multitask_efficientnet_v2_s',
+            'config': {
+                'annotation_file': 'bioast_dataset/annotations/multitask_annotations.json',
+                'image_root': 'bioast_dataset/images',
+                'epochs': 50,
+                'batch_size': 32,
+                'learning_rate': 1e-3,
+                'use_amp': True
+            }
+        },
+        {
+            'name': 'mic_mobilenetv3_multitask',
+            'model_name': 'multitask_mic_mobilenetv3',
             'config': {
                 'annotation_file': 'bioast_dataset/annotations/multitask_annotations.json',
                 'image_root': 'bioast_dataset/images',
