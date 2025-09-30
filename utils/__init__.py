@@ -3,10 +3,12 @@
 提供各种实用工具和辅助功能。
 """
 
-from .integration import ModelLifecycleManager
+# 注释掉有问题的导入
+# from .integration import ModelLifecycleManager
 from .config import Config, ConfigManager
 from .logger import setup_logger, get_logger
 from .validators import ModelValidator, DataValidator
+from .metrics import MultiTaskMetrics
 from .helpers import (
     generate_id,
     format_size,
@@ -14,9 +16,9 @@ from .helpers import (
     safe_json_load,
     safe_json_save,
     ensure_dir,
-    get_file_hash,
-    compress_file,
-    extract_file
+    get_file_hash
+    # compress_file,  # 这些函数在helpers.py中不存在
+    # extract_file
 )
 
 # 全局配置管理器
