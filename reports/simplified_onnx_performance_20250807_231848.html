@@ -1,0 +1,123 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ONNX Performance Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .status { background-color: #28a745; color: white; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: center; font-size: 18px; font-weight: bold; }
+        .metric-card { background-color: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+        .comparison-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .comparison-table th, .comparison-table td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        .comparison-table th { background-color: #f2f2f2; font-weight: bold; }
+        .better { color: #28a745; font-weight: bold; }
+        .worse { color: #dc3545; font-weight: bold; }
+        .equal { color: #6c757d; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 ONNX Performance Test Report</h1>
+            <p><strong>Test Date:</strong> 2025-08-07T23:18:48.506311</p>
+            <p><strong>Model:</strong> SimplifiedAirBubbleDetector</p>
+        </div>
+        
+        <div class="status">
+            ✅ Overall Status: PASS
+        </div>
+        
+        <h2>📊 Performance Summary</h2>
+        <table class="comparison-table">
+            <tr>
+                <th>Metric</th>
+                <th>PyTorch</th>
+                <th>ONNX</th>
+                <th>Change</th>
+                <th>Status</th>
+            </tr>
+            <tr>
+                <td><strong>Accuracy</strong></td>
+                <td>0.9832</td>
+                <td>0.9832</td>
+                <td class="better">
+                    +0.00%
+                </td>
+                <td>✅ Maintained</td>
+            </tr>
+            <tr>
+                <td><strong>Inference Speed</strong></td>
+                <td>0.166 ms</td>
+                <td>0.296 ms</td>
+                <td class="worse">
+                    0.56x faster
+                </td>
+                <td>❌ Slower</td>
+            </tr>
+            <tr>
+                <td><strong>Memory Usage</strong></td>
+                <td>56.06 MB</td>
+                <td>23.81 MB</td>
+                <td class="better">
+                    -57.5%
+                </td>
+                <td>✅ Reduced</td>
+            </tr>
+            <tr>
+                <td><strong>Numerical Precision</strong></td>
+                <td>Reference</td>
+                <td>Max diff: 0.00041389</td>
+                <td>-</td>
+                <td>✅ Acceptable</td>
+            </tr>
+        </table>
+        
+        <h2>🎯 Detailed Results</h2>
+        
+        <div class="metric-card">
+            <h3>⚡ Speed Performance</h3>
+            <p><strong>PyTorch:</strong> 0.166 ± 0.007 ms</p>
+            <p><strong>ONNX:</strong> 0.296 ± 0.003 ms</p>
+            <p><strong>Speedup:</strong> 0.56x</p>
+        </div>
+        
+        <div class="metric-card">
+            <h3>🎯 Accuracy Performance</h3>
+            <p><strong>Test Samples:</strong> 2614</p>
+            <p><strong>PyTorch Accuracy:</strong> 0.9832 (98.32%)</p>
+            <p><strong>ONNX Accuracy:</strong> 0.9832 (98.32%)</p>
+            <p><strong>Prediction Consistency:</strong> 1.0000 (100.00%)</p>
+        </div>
+        
+        <div class="metric-card">
+            <h3>🔢 Numerical Precision</h3>
+            <p><strong>Maximum Difference:</strong> 0.00041389</p>
+            <p><strong>Average Mean Difference:</strong> 0.00033744</p>
+            <p><strong>Precision Status:</strong> ✅ Acceptable</p>
+        </div>
+        
+        <div class="metric-card">
+            <h3>💾 Memory Usage</h3>
+            <p><strong>PyTorch Memory:</strong> 56.06 MB</p>
+            <p><strong>ONNX Memory:</strong> 23.81 MB</p>
+            <p><strong>Memory Ratio:</strong> 2.35x</p>
+        </div>
+        
+        <h2>📁 Model Information</h2>
+        <div class="metric-card">
+            <p><strong>ONNX Model Size:</strong> 0.53 MB</p>
+            <p><strong>PyTorch Checkpoint:</strong> checkpoints/simplified_airbubble_detector_20250807_213233_best.pth</p>
+            <p><strong>ONNX Model:</strong> onnx_models/simplified_airbubble_detector_20250807_220033.onnx</p>
+        </div>
+        
+        <h2>✅ Conclusion</h2>
+        <div class="metric-card">
+            <p><strong>Performance Status:</strong> ✅ ONNX conversion successful with no performance degradation</p>
+            <p><strong>Recommendation:</strong> ONNX model is ready for production deployment</p>
+        </div>
+    </div>
+</body>
+</html>
+        

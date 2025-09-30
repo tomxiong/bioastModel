@@ -179,16 +179,6 @@ mlruns/
 *.bmp
 *.tiff
 *.svg
-analysis/
-reports/
-reports/enhanced_individual_analysis/
-reports/detailed_analysis/
-reports/individual_analysis/
-reports/accurate_detailed_analysis/
-reports/updated_individual_analysis/
-reports/comparisons/
-reports/interpretability/
-reports/summaries/
 
 # Temporary files
 *.tmp
