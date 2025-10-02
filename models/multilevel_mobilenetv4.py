@@ -213,7 +213,8 @@ class MultiLevelMobileNetV4(nn.Module):
                  model_size: str = 'small',  # 'small' or 'medium' or 'large'
                  input_channels: int = 1,
                  dropout_rate: float = 0.3,
-                 use_hierarchical_loss: bool = True):
+                 use_hierarchical_loss: bool = True,
+                 task_weights: dict = None):
         super().__init__()
 
         self.model_size = model_size
@@ -268,11 +269,15 @@ class MultiLevelMobileNetV4(nn.Module):
         })
 
         # Task weights (基于改进版的成功经验: 统一权重效果最好)
-        self.task_weights = {
-            'growth_level': 1.0,
-            'growth_pattern': 1.0,
-            'interference_factors': 1.0
-        }
+        # 但允许通过参数自定义以进行微调
+        if task_weights is None:
+            self.task_weights = {
+                'growth_level': 1.0,
+                'growth_pattern': 1.0,
+                'interference_factors': 1.0
+            }
+        else:
+            self.task_weights = task_weights
 
         # Initialize weights
         self._initialize_weights()

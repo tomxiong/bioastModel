@@ -15,6 +15,8 @@ import sys
 import json
 import logging
 import argparse
+import random
+import numpy as np
 import torch
 from pathlib import Path
 
@@ -30,6 +32,16 @@ from models.multilevel_mobilenetv4 import (
 )
 from training.improved_multilevel_trainer import ImprovedMultiLevelTrainer
 from training.multilevel_dataset import create_multilevel_dataloaders
+
+
+def set_seed(seed: int):
+    """设置随机种子以保证可复现性"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 def setup_logging(log_dir: str):
@@ -68,6 +80,12 @@ def parse_args():
                        help='Number of input channels (1 for grayscale)')
     parser.add_argument('--dropout_rate', type=float, default=0.3,
                        help='Dropout rate')
+    parser.add_argument('--task_weight_growth_level', type=float, default=1.0,
+                       help='Task weight for growth level')
+    parser.add_argument('--task_weight_growth_pattern', type=float, default=1.0,
+                       help='Task weight for growth pattern')
+    parser.add_argument('--task_weight_interference', type=float, default=1.0,
+                       help='Task weight for interference factors')
 
     # Training arguments (基于改进版的最佳配置)
     parser.add_argument('--batch_size', type=int, default=64,
@@ -82,6 +100,8 @@ def parse_args():
                        help='Number of warmup epochs')
     parser.add_argument('--patience', type=int, default=10,
                        help='Patience for early stopping')
+    parser.add_argument('--seed', type=int, default=42,
+                       help='Random seed for reproducibility')
 
     # Data split
     parser.add_argument('--train_ratio', type=float, default=0.7,
@@ -106,6 +126,9 @@ def parse_args():
 def main():
     args = parse_args()
 
+    # 设置随机种子
+    set_seed(args.seed)
+
     # 设置设备
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -120,6 +143,7 @@ def main():
     logger.info("=" * 80)
     logger.info(f"MultiLevelMobileNetV4 Training ({args.model_size.upper()})")
     logger.info("=" * 80)
+    logger.info(f"Random Seed: {args.seed}")
     logger.info(f"Device: {device}")
     logger.info(f"Experiment directory: {experiment_dir}")
     logger.info(f"Arguments: {vars(args)}")
@@ -164,21 +188,31 @@ def main():
     logger.info("Creating model...")
     logger.info("=" * 80)
     try:
+        # 准备任务权重
+        task_weights = {
+            'growth_level': args.task_weight_growth_level,
+            'growth_pattern': args.task_weight_growth_pattern,
+            'interference_factors': args.task_weight_interference
+        }
+
         # 选择模型大小
         if args.model_size == 'small':
             model = create_multilevel_mobilenetv4_small(
                 input_channels=args.input_channels,
-                dropout_rate=args.dropout_rate
+                dropout_rate=args.dropout_rate,
+                task_weights=task_weights
             )
         elif args.model_size == 'medium':
             model = create_multilevel_mobilenetv4_medium(
                 input_channels=args.input_channels,
-                dropout_rate=args.dropout_rate
+                dropout_rate=args.dropout_rate,
+                task_weights=task_weights
             )
         else:  # large
             model = create_multilevel_mobilenetv4_large(
                 input_channels=args.input_channels,
-                dropout_rate=args.dropout_rate
+                dropout_rate=args.dropout_rate,
+                task_weights=task_weights
             )
 
         model_info = model.get_model_info()
