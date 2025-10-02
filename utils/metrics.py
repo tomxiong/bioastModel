@@ -264,7 +264,7 @@ class MultiTaskMetrics:
 def create_multitask_metrics(task_names: List[str], 
                            task_types: Optional[Dict[str, str]] = None) -> MultiTaskMetrics:
     """
-    创建多任务指标计算器的工厂函数
+    创建多任务指标计算器
     
     Args:
         task_names: 任务名称列表
@@ -274,3 +274,27 @@ def create_multitask_metrics(task_names: List[str],
         MultiTaskMetrics实例
     """
     return MultiTaskMetrics(task_names, task_types)
+
+
+def calculate_metrics(predictions: Dict[str, torch.Tensor], 
+                     targets: Dict[str, torch.Tensor],
+                     task_names: Optional[List[str]] = None) -> Dict[str, Dict[str, float]]:
+    """
+    计算多任务指标的便捷函数
+    
+    Args:
+        predictions: 预测结果字典
+        targets: 真实标签字典
+        task_names: 任务名称列表，如果为None则从predictions中获取
+        
+    Returns:
+        指标结果字典
+    """
+    if task_names is None:
+        task_names = list(predictions.keys())
+    
+    # 创建指标计算器
+    metrics_calculator = create_multitask_metrics(task_names)
+    
+    # 计算指标
+    return metrics_calculator.compute_metrics(predictions, targets)

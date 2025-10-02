@@ -84,11 +84,11 @@ class MultiLevelMobileNetV3(nn.Module):
             'interference_factors': self._create_classifier(512, self.num_classes['interference_factors'], dropout_rate)
         })
         
-        # 层次化权重（用于损失函数）
+        # 层次化权重（用于损失函数）- 优化版权重配置
         self.task_weights = {
             'growth_level': 1.0,
-            'growth_pattern': 0.8,
-            'interference_factors': 0.6
+            'growth_pattern': 1.0,  # 提高权重以改善分类性能
+            'interference_factors': 0.8  # 适度提高权重
         }
         
         # 初始化权重

@@ -197,45 +197,25 @@ class EnhancedMultitaskDataset(Dataset):
         return image
     
     def _encode_labels(self, features: Dict[str, Any]) -> Dict[str, torch.Tensor]:
-        """编码标签 - 适配增强MIC MobileNetV3模型"""
+        """编码标签 - 适配优化的多级MobileNetV3模型"""
         labels = {}
         
-        # 主分类任务：Growth Level (negative=0, positive=1)
+        # Growth Level (2分类: negative=0, positive=1)
         growth_level = features.get('growth_level', 'negative')
-        labels['classification'] = torch.tensor(
+        labels['growth_level'] = torch.tensor(
             self.label_mappings['growth_level'].get(growth_level, 0),
             dtype=torch.long
         )
         
-        # 辅助分类任务：同样使用Growth Level
-        labels['aux_classification'] = labels['classification'].clone()
-        
-        # 气泡检测：基于干扰因素推断
-        interference_factors = features.get('interference_factors', [])
-        has_bubbles = float('pores' in interference_factors or 'artifacts' in interference_factors)
-        labels['bubble_detection'] = torch.tensor(has_bubbles, dtype=torch.float)
-        
-        # 浊度分析：基于Growth Level
-        turbidity_level = 1.0 if growth_level == 'positive' else 0.0
-        labels['turbidity'] = torch.tensor(turbidity_level, dtype=torch.float)
-        
-        # 质量评估：基于置信度和干扰因素
-        confidence = features.get('confidence', 1.0)
-        quality_score = confidence * (1.0 - 0.1 * len(interference_factors))
-        labels['quality'] = torch.tensor(max(0.0, min(1.0, quality_score)), dtype=torch.float)
-        
-        # 额外保存原始特征用于分析
+        # Growth Pattern (多分类)
+        growth_pattern = features.get('growth_pattern', 'clean')
         labels['growth_pattern'] = torch.tensor(
-            self.label_mappings['growth_pattern'].get(features.get('growth_pattern', 'clean'), 0),
+            self.label_mappings['growth_pattern'].get(growth_pattern, 0),
             dtype=torch.long
         )
         
-        labels['microbe_type'] = torch.tensor(
-            self.label_mappings['microbe_type'].get(features.get('microbe_type', 'bacteria'), 0),
-            dtype=torch.long
-        )
-        
-        # 干扰因素多标签
+        # Interference Factors (多标签)
+        interference_factors = features.get('interference_factors', [])
         interference_vector = torch.zeros(len(self.label_mappings['interference_factors']))
         for factor in interference_factors:
             if factor in self.label_mappings['interference_factors']:
@@ -243,7 +223,14 @@ class EnhancedMultitaskDataset(Dataset):
                 interference_vector[idx] = 1.0
         labels['interference_factors'] = interference_vector
         
-        labels['confidence'] = torch.tensor(confidence, dtype=torch.float32)
+        # Microbe Type (可选)
+        labels['microbe_type'] = torch.tensor(
+            self.label_mappings['microbe_type'].get(features.get('microbe_type', 'bacteria'), 0),
+            dtype=torch.long
+        )
+        
+        # 保存置信度
+        labels['confidence'] = torch.tensor(features.get('confidence', 1.0), dtype=torch.float32)
         
         return labels
     
