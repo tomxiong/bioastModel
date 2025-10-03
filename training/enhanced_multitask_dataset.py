@@ -33,11 +33,12 @@ class EnhancedMultitaskDataset(Dataset):
     4. microbe_type: 微生物类型 (当前仅支持细菌)
     """
     
-    def __init__(self, 
+    def __init__(self,
                  data_root: str,
                  annotations_file: str = "m9e1n170.json",
                  split: str = 'train',
                  split_ratio: Tuple[float, float, float] = (0.7, 0.15, 0.15),
+                 split_file: Optional[str] = None,
                  transform: Optional[transforms.Compose] = None,
                  target_size: Tuple[int, int] = (70, 70),
                  seed: int = 42):
@@ -46,29 +47,31 @@ class EnhancedMultitaskDataset(Dataset):
             data_root: 数据集根目录 (/home/aaa/ws/bioastModel/ds/images)
             annotations_file: 标注文件名
             split: 数据集划分 ('train', 'val', 'test')
-            split_ratio: 训练/验证/测试集比例
+            split_ratio: 训练/验证/测试集比例（仅在split_file=None时使用）
+            split_file: 固定数据集划分文件路径（推荐使用，确保可复现性）
             transform: 数据增强变换
             target_size: 目标图像尺寸
-            seed: 随机种子
+            seed: 随机种子（仅在split_file=None时使用）
         """
         self.data_root = Path(data_root)
         self.annotations_file = annotations_file
         self.split = split
         self.split_ratio = split_ratio
+        self.split_file = split_file
         self.target_size = target_size
         self.seed = seed
-        
+
         # 设置随机种子
         random.seed(seed)
         np.random.seed(seed)
-        
+
         # 加载完整标注数据
         self.full_annotations = self._load_annotations()
-        
+
         # 创建标签映射
         self.label_mappings = self._create_label_mappings()
-        
-        # 数据集划分
+
+        # 数据集划分（支持固定划分文件）
         self.annotations = self._split_dataset()
         
         # 设置变换
@@ -126,9 +129,63 @@ class EnhancedMultitaskDataset(Dataset):
         return mappings
     
     def _split_dataset(self) -> List[Dict]:
-        """数据集划分"""
+        """数据集划分（支持固定划分文件）"""
         annotations = self.full_annotations['annotations']
-        
+
+        # 如果提供了固定划分文件，使用固定划分
+        if self.split_file is not None:
+            return self._load_fixed_split(annotations)
+
+        # 否则使用随机划分（旧逻辑，保持向后兼容）
+        return self._random_split(annotations)
+
+    def _load_fixed_split(self, annotations: List[Dict]) -> List[Dict]:
+        """从固定划分文件加载数据集"""
+        split_file = Path(self.split_file)
+
+        if not split_file.exists():
+            raise FileNotFoundError(f"固定划分文件不存在: {split_file}")
+
+        print(f"使用固定数据集划分: {split_file}")
+
+        with open(split_file, 'r', encoding='utf-8') as f:
+            split_data = json.load(f)
+
+        # 获取当前split的image_path列表
+        split_indices = set(split_data['splits'][self.split])
+
+        # 创建image_path到annotation的映射
+        ann_map = {ann['image_path']: ann for ann in annotations}
+
+        # 根据划分文件筛选样本
+        split_annotations = []
+        missing_count = 0
+
+        for image_path in split_indices:
+            if image_path in ann_map:
+                # 检查图像文件是否存在
+                full_path = self.data_root / image_path
+                if full_path.exists():
+                    split_annotations.append(ann_map[image_path])
+                else:
+                    missing_count += 1
+            else:
+                print(f"警告: 划分文件中的样本不在标注中: {image_path}")
+
+        print(f"从固定划分加载 {self.split}: {len(split_annotations)} 个样本")
+        if missing_count > 0:
+            print(f"  缺失图像: {missing_count} 个")
+
+        # 打印统计信息（与划分文件中的统计对比）
+        if 'statistics' in split_data and self.split in split_data['statistics']:
+            expected_stats = split_data['statistics'][self.split]
+            print(f"  预期样本数: {expected_stats['total']}")
+            print(f"  实际样本数: {len(split_annotations)}")
+
+        return split_annotations
+
+    def _random_split(self, annotations: List[Dict]) -> List[Dict]:
+        """随机划分数据集（旧逻辑，保持向后兼容）"""
         # 过滤存在的图像文件
         valid_annotations = []
         missing_files = 0
@@ -138,32 +195,33 @@ class EnhancedMultitaskDataset(Dataset):
                 valid_annotations.append(ann)
             else:
                 missing_files += 1
-        
+
         print(f"原始标注: {len(annotations)}个, 有效图像: {len(valid_annotations)}个, 缺失图像: {missing_files}个")
-        
+        print(f"⚠️  警告: 使用随机划分，建议使用固定划分文件以确保可复现性")
+
         # 按growth_level分层抽样
         negative_samples = [ann for ann in valid_annotations if ann['features']['growth_level'] == 'negative']
         positive_samples = [ann for ann in valid_annotations if ann['features']['growth_level'] == 'positive']
-        
+
         def split_samples(samples, ratios):
             random.shuffle(samples)
             n = len(samples)
             train_end = int(n * ratios[0])
             val_end = train_end + int(n * ratios[1])
-            
+
             return {
                 'train': samples[:train_end],
                 'val': samples[train_end:val_end],
                 'test': samples[val_end:]
             }
-        
+
         neg_split = split_samples(negative_samples, self.split_ratio)
         pos_split = split_samples(positive_samples, self.split_ratio)
-        
+
         # 合并对应的split
         split_data = neg_split[self.split] + pos_split[self.split]
         random.shuffle(split_data)
-        
+
         return split_data
     
     def _get_default_transform(self) -> transforms.Compose:

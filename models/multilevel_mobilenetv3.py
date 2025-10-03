@@ -144,15 +144,17 @@ class MultiLevelMobileNetV3(nn.Module):
         
         return outputs
     
-    def compute_loss(self, outputs: Dict[str, torch.Tensor], 
-                    targets: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def compute_loss(self, outputs: Dict[str, torch.Tensor],
+                    targets: Dict[str, torch.Tensor],
+                    custom_criterions: Optional[Dict[str, torch.nn.Module]] = None) -> Dict[str, torch.Tensor]:
         """
         计算多任务损失
-        
+
         Args:
             outputs: 模型输出
             targets: 真实标签
-            
+            custom_criterions: 自定义损失函数字典 {task_name: criterion}
+
         Returns:
             Dict containing individual and total losses
         """
@@ -161,19 +163,28 @@ class MultiLevelMobileNetV3(nn.Module):
         
         # Growth level loss (二分类)
         if 'growth_level' in outputs and 'growth_level' in targets:
-            loss_fn = nn.CrossEntropyLoss()
+            if custom_criterions and 'growth_level' in custom_criterions:
+                loss_fn = custom_criterions['growth_level']
+            else:
+                loss_fn = nn.CrossEntropyLoss()
             losses['growth_level'] = loss_fn(outputs['growth_level'], targets['growth_level'])
             total_loss += self.task_weights['growth_level'] * losses['growth_level']
-        
+
         # Growth pattern loss (多分类)
         if 'growth_pattern' in outputs and 'growth_pattern' in targets:
-            loss_fn = nn.CrossEntropyLoss()
+            if custom_criterions and 'growth_pattern' in custom_criterions:
+                loss_fn = custom_criterions['growth_pattern']
+            else:
+                loss_fn = nn.CrossEntropyLoss()
             losses['growth_pattern'] = loss_fn(outputs['growth_pattern'], targets['growth_pattern'])
             total_loss += self.task_weights['growth_pattern'] * losses['growth_pattern']
-        
+
         # Interference factors loss (多标签)
         if 'interference_factors' in outputs and 'interference_factors' in targets:
-            loss_fn = nn.BCEWithLogitsLoss()
+            if custom_criterions and 'interference_factors' in custom_criterions:
+                loss_fn = custom_criterions['interference_factors']
+            else:
+                loss_fn = nn.BCEWithLogitsLoss()
             losses['interference_factors'] = loss_fn(outputs['interference_factors'], targets['interference_factors'])
             total_loss += self.task_weights['interference_factors'] * losses['interference_factors']
         
