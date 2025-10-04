@@ -79,15 +79,38 @@ def create_fixed_split(
     print(f"有效图像: {len(valid_annotations)}")
     print(f"缺失图像: {missing_files}")
 
-    # 按 growth_level 分层抽样
-    print("\n按 growth_level 分层抽样...")
-    negative_samples = [ann for ann in valid_annotations
-                       if ann['features']['growth_level'] == 'negative']
-    positive_samples = [ann for ann in valid_annotations
-                       if ann['features']['growth_level'] == 'positive']
+    # 按 growth_level + pores 双层分层抽样
+    print("\n按 growth_level + pores 双层分层抽样...")
 
-    print(f"  negative: {len(negative_samples)}")
-    print(f"  positive: {len(positive_samples)}")
+    # 创建4个分层组合
+    strata = {
+        'negative_no_pores': [],
+        'negative_with_pores': [],
+        'positive_no_pores': [],
+        'positive_with_pores': []
+    }
+
+    for ann in valid_annotations:
+        features = ann['features']
+        growth_level = features['growth_level']
+        interference = features.get('interference_factors', [])
+        has_pores = 'pores' in interference
+
+        if growth_level == 'negative':
+            if has_pores:
+                strata['negative_with_pores'].append(ann)
+            else:
+                strata['negative_no_pores'].append(ann)
+        else:  # positive
+            if has_pores:
+                strata['positive_with_pores'].append(ann)
+            else:
+                strata['positive_no_pores'].append(ann)
+
+    print(f"  negative_no_pores: {len(strata['negative_no_pores'])}")
+    print(f"  negative_with_pores: {len(strata['negative_with_pores'])}")
+    print(f"  positive_no_pores: {len(strata['positive_no_pores'])}")
+    print(f"  positive_with_pores: {len(strata['positive_with_pores'])}")
 
     def split_samples(samples, ratios, split_name):
         """划分样本"""
@@ -111,15 +134,22 @@ def create_fixed_split(
 
         return splits
 
-    # 划分 negative 和 positive
+    # 对每个分层组合进行划分
     ratios = (train_ratio, val_ratio, test_ratio)
-    neg_splits = split_samples(negative_samples, ratios, "negative")
-    pos_splits = split_samples(positive_samples, ratios, "positive")
+    all_splits = {}
 
-    # 合并并打乱
-    train_samples = neg_splits['train'] + pos_splits['train']
-    val_samples = neg_splits['val'] + pos_splits['val']
-    test_samples = neg_splits['test'] + pos_splits['test']
+    for stratum_name, samples in strata.items():
+        all_splits[stratum_name] = split_samples(samples, ratios, stratum_name)
+
+    # 合并所有分层的划分
+    train_samples = []
+    val_samples = []
+    test_samples = []
+
+    for stratum_name, splits in all_splits.items():
+        train_samples.extend(splits['train'])
+        val_samples.extend(splits['val'])
+        test_samples.extend(splits['test'])
 
     random.shuffle(train_samples)
     random.shuffle(val_samples)

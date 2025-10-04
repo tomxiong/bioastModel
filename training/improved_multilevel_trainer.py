@@ -42,7 +42,8 @@ class ImprovedMultiLevelTrainer:
                  patience: int = 10,  # 减少patience以更早停止
                  interference_class_weights: Optional[List[float]] = None,  # Interference类别权重
                  task_weights: Optional[List[float]] = None,  # 🆕 v0.9.3: 任务权重 [growth_level, growth_pattern, interference]
-                 optimize_thresholds: bool = False):  # 是否优化阈值
+                 optimize_thresholds: bool = False,  # 是否优化阈值
+                 pattern_conditional_pores_loss = None):  # 🆕 v0.10.0: Pattern-Conditional Pores Loss
         
         self.model = model.to(device)
         self.train_loader = train_loader
@@ -142,12 +143,17 @@ class ImprovedMultiLevelTrainer:
         else:
             self.threshold_optimizer = None
 
+        # 🆕 v0.10.0: Pattern-Conditional Pores Loss
+        self.pattern_conditional_pores_loss = pattern_conditional_pores_loss
+
         logger.info(f"Improved Trainer initialized. Experiment dir: {experiment_dir}")
         logger.info(f"Warmup epochs: {warmup_epochs}, Patience: {patience}")
         logger.info(f"Task weights: {self.task_weights} (growth_level, growth_pattern, interference)")
         logger.info(f"Interference class weights: {self.interference_pos_weights.tolist()}")
         if self.optimize_thresholds:
             logger.info(f"Threshold optimization: ENABLED")
+        if self.pattern_conditional_pores_loss:
+            logger.info(f"Pattern-Conditional Pores Loss: ENABLED")
     
     def train_epoch(self) -> Dict[str, float]:
         """训练一个epoch"""
@@ -167,11 +173,48 @@ class ImprovedMultiLevelTrainer:
             outputs = self.model(images)
             
             # 计算损失
-            custom_criterions = {
-                'interference_factors': self.criterion_interference
-            }
-            losses = self.model.compute_loss(outputs, targets, custom_criterions)
-            total_batch_loss = losses['total']
+            if self.pattern_conditional_pores_loss:
+                # 使用 Pattern-Conditional Interference Loss
+                # 手动计算各任务损失
+                losses = {}
+
+                # Growth level loss
+                if 'growth_level' in outputs and 'growth_level' in targets:
+                    losses['growth_level'] = nn.CrossEntropyLoss()(
+                        outputs['growth_level'],
+                        targets['growth_level']
+                    )
+
+                # Growth pattern loss
+                if 'growth_pattern' in outputs and 'growth_pattern' in targets:
+                    losses['growth_pattern'] = nn.CrossEntropyLoss()(
+                        outputs['growth_pattern'],
+                        targets['growth_pattern']
+                    )
+
+                # Interference factors loss with pattern-conditional weighting
+                if 'interference_factors' in outputs and 'interference_factors' in targets:
+                    losses['interference_factors'] = self.pattern_conditional_pores_loss(
+                        interference_pred=outputs['interference_factors'],
+                        interference_target=targets['interference_factors'],
+                        pattern_pred=outputs['growth_pattern'],
+                        growth_level=targets['growth_level']
+                    )
+
+                # 计算总损失
+                total_batch_loss = sum(
+                    self.task_weights[i] * losses[task]
+                    for i, task in enumerate(['growth_level', 'growth_pattern', 'interference_factors'])
+                    if task in losses
+                )
+                losses['total'] = total_batch_loss
+            else:
+                # 使用默认损失
+                custom_criterions = {
+                    'interference_factors': self.criterion_interference
+                }
+                losses = self.model.compute_loss(outputs, targets, custom_criterions)
+                total_batch_loss = losses['total']
             
             # 反向传播
             total_batch_loss.backward()
@@ -218,11 +261,47 @@ class ImprovedMultiLevelTrainer:
                 outputs = self.model(images)
                 
                 # 计算损失
-                custom_criterions = {
-                    'interference_factors': self.criterion_interference
-                }
-                losses = self.model.compute_loss(outputs, targets, custom_criterions)
-                total_batch_loss = losses['total']
+                if self.pattern_conditional_pores_loss:
+                    # 使用 Pattern-Conditional Interference Loss
+                    losses = {}
+
+                    # Growth level loss
+                    if 'growth_level' in outputs and 'growth_level' in targets:
+                        losses['growth_level'] = nn.CrossEntropyLoss()(
+                            outputs['growth_level'],
+                            targets['growth_level']
+                        )
+
+                    # Growth pattern loss
+                    if 'growth_pattern' in outputs and 'growth_pattern' in targets:
+                        losses['growth_pattern'] = nn.CrossEntropyLoss()(
+                            outputs['growth_pattern'],
+                            targets['growth_pattern']
+                        )
+
+                    # Interference factors loss with pattern-conditional weighting
+                    if 'interference_factors' in outputs and 'interference_factors' in targets:
+                        losses['interference_factors'] = self.pattern_conditional_pores_loss(
+                            interference_pred=outputs['interference_factors'],
+                            interference_target=targets['interference_factors'],
+                            pattern_pred=outputs['growth_pattern'],
+                            growth_level=targets['growth_level']
+                        )
+
+                    # 计算总损失
+                    total_batch_loss = sum(
+                        self.task_weights[i] * losses[task]
+                        for i, task in enumerate(['growth_level', 'growth_pattern', 'interference_factors'])
+                        if task in losses
+                    )
+                    losses['total'] = total_batch_loss
+                else:
+                    # 使用默认损失
+                    custom_criterions = {
+                        'interference_factors': self.criterion_interference
+                    }
+                    losses = self.model.compute_loss(outputs, targets, custom_criterions)
+                    total_batch_loss = losses['total']
                 
                 # 累计损失
                 total_loss += total_batch_loss.item()
